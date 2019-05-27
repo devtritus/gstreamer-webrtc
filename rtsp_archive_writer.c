@@ -64,7 +64,7 @@ int main (int argc, char *argv[])
       NULL);
 
   g_object_set (G_OBJECT (splitmuxsink),
-     "location", "archive/chunk%02d.mov",
+     "location", "../archive/chunk%02d.mov",
      "max-size-time", 0,
      "max-size-bytes", 33554432,
      NULL);
