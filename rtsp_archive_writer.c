@@ -58,9 +58,9 @@ int main (int argc, char *argv[])
   }
 
   g_object_set (G_OBJECT (rtspsrc),
-      "location", "rtsp://172.17.13.213:554/cam/realmonitor?channel=1&subtype=0",
+      "location", "rtsp://192.168.1.108:554/cam/realmonitor?channel=1&subtype=0",
       "user-id", "admin",
-      "user-pw", "Barco1984",
+      "user-pw", "1236987q",
       NULL);
 
   g_object_set (G_OBJECT (splitmuxsink),

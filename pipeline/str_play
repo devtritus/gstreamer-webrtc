@@ -1,0 +1,1 @@
+gst-launch-1.0 rtspsrc user-id=admin user-pw=1236987q location='rtsp://192.168.1.108:554/cam/realmonitor?channel=1&subtype=0' ! rtph264depay ! h264parse ! decodebin ! autovideosink
