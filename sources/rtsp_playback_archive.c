@@ -30,49 +30,38 @@ int main (int argc, char *argv[])
 {
   GMainLoop *loop;
 
-  GstElement *pipeline, *splitmuxsink, *decodebin, *autovideosink;
+  GstElement *pipeline, *splitmuxsrc, *decodebin, *autovideosink;
   GstBus *bus;
 
   GstPad *sinkpad;
   GstPad *parsesrc;
 
-  gchar *rtspUrl, *login, *password;
-
   gst_init (&argc, &argv);
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  if (argc != 4) {
-    g_printerr ("Rtsp url, login, password are required");
-    return -1;
-  }
-
-  rtspUrl = argv[1];
-  login = argv[2];
-  password = argv[3];
-
-  g_print("%s, %s, %s\n", rtspUrl, login, password);
-
-  pipeline = gst_pipeline_new ("rtsp-arhive-writer"); 
-  splitmuxsink = gst_element_factory_make ("splitmuxsink", "splitmuxsink");
+  pipeline = gst_pipeline_new ("rtsp-arhive-player"); 
+  splitmuxsrc = gst_element_factory_make ("splitmuxsrc", "splitmuxsrc");
   decodebin = gst_element_factory_make ("decodebin", "decodebin");
   autovideosink = gst_element_factory_make ("autovideosink", "autovideosink");
 
-  if (!pipeline || !splitmuxsink || !decodebin || !autovideosink) {
+  if (!pipeline || !splitmuxsrc || !decodebin || !autovideosink) {
     g_printerr ("One of element is not initialized");
     return -1;
   }
 
-  g_object_set (G_OBJECT (splitmuxsink),
-      "location", rtspUrl,
-      "user-id", login,
-      "user-pw", password,
-      NULL);
+  g_object_set (G_OBJECT (splitmuxsrc), "location", "../archive/video*.mov", NULL);
 
-  gst_bin_add_many (GST_BIN (pipeline), splitmuxsink, decodebin, autovideosink, NULL);
+  gst_bin_add_many (GST_BIN (pipeline), splitmuxsrc, decodebin, autovideosink, NULL);
 
-  if (!gst_element_link_many (splitmuxsink, decodebin, autovideosink, NULL)) {
-    g_error ("Linked failed");
+  if (!g_signal_connect (splitmuxsrc, "pad-added", G_CALLBACK (on_pad_added), decodebin)) {
+    g_error ("Linked failed #2");
+    return -1;
+  }
+
+
+  if (!g_signal_connect (decodebin, "pad-added", G_CALLBACK (on_pad_added), autovideosink)) {
+    g_error ("Linked failed #2");
     return -1;
   }
 

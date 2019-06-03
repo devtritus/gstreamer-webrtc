@@ -9,7 +9,7 @@ case $1 in
     filename="rtsp_streamer.c"
     binname="rtsp_streamer"
     ;;
-  "play-arc")
+  "arc-play")
     filename="rtsp_playback_archive.c"
     binname="rtsp_playback_archive"
     ;;

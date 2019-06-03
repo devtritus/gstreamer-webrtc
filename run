@@ -7,7 +7,7 @@ case $1 in
   "str")
     binname="rtsp_streamer"
     ;;
-  "play-arc")
+  "arc-play")
     binname="rtsp_playback_archive"
     ;;
   *)
