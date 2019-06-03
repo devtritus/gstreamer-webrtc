@@ -19,4 +19,4 @@ case $1 in
     ;;
 esac
 
-gcc files/$filename -o ../bin/$binname `pkg-config --cflags --libs gstreamer-1.0`
+gcc sources/$filename -o ../bin/$binname `pkg-config --cflags --libs gstreamer-1.0`
