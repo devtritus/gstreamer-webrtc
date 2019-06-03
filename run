@@ -1,0 +1,23 @@
+#!/bin/sh
+
+case $1 in
+  "arc")
+    binname="rtsp_archive_writer"
+    ;;
+  "str")
+    binname="rtsp_streamer"
+    ;;
+  "play-arc")
+    binname="rtsp_playback_archive"
+    ;;
+  *)
+    echo "Name not found"
+    exit
+    ;;
+esac
+
+login=`cat ../camera_login`
+password=`cat ../camera_password`
+location=`cat ../camera_location`
+
+../bin/$binname $location $login $password

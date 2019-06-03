@@ -35,16 +35,22 @@ int main (int argc, char *argv[])
   GstPad *sinkpad;
   GstPad *parsesrc;
 
+  gchar *rtspUrl, *login, *password;
+
   gst_init (&argc, &argv);
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  /*
-  if (argc != 2) {
-    g_printerr ("Rtsp url as argument is required");
+  if (argc != 4) {
+    g_printerr ("Rtsp url, login, password are required");
     return -1;
   }
-  */
+
+  rtspUrl = argv[1];
+  login = argv[2];
+  password = argv[3];
+
+  g_print("%s, %s, %s\n", rtspUrl, login, password);
 
   pipeline = gst_pipeline_new ("rtsp-arhive-writer"); 
   rtspsrc = gst_element_factory_make ("rtspsrc", "rtspsrc");
@@ -58,9 +64,9 @@ int main (int argc, char *argv[])
   }
 
   g_object_set (G_OBJECT (rtspsrc),
-      "location", "rtsp://192.168.1.108:554/cam/realmonitor?channel=1&subtype=0",
-      "user-id", "admin",
-      "user-pw", "1236987q",
+      "location", rtspUrl,
+      "user-id", login,
+      "user-pw", password,
       NULL);
 
   g_object_set (G_OBJECT (splitmuxsink),

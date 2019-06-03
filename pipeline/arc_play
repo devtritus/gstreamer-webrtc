@@ -1,1 +1,0 @@
- gst-launch-1.0 splitmuxsrc location=../../archive/pipeline/video*.mov ! decodebin ! autovideosink

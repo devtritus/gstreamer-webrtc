@@ -30,55 +30,49 @@ int main (int argc, char *argv[])
 {
   GMainLoop *loop;
 
-  GstElement *pipeline, *rtspsrc, *rtph264depay, *h264parse, *decodebin, *autovideosink;
+  GstElement *pipeline, *splitmuxsink, *decodebin, *autovideosink;
   GstBus *bus;
 
   GstPad *sinkpad;
   GstPad *parsesrc;
 
+  gchar *rtspUrl, *login, *password;
+
   gst_init (&argc, &argv);
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  /*
-  if (argc != 2) {
-    g_printerr ("Rtsp url as argument is required");
+  if (argc != 4) {
+    g_printerr ("Rtsp url, login, password are required");
     return -1;
   }
-  */
+
+  rtspUrl = argv[1];
+  login = argv[2];
+  password = argv[3];
+
+  g_print("%s, %s, %s\n", rtspUrl, login, password);
 
   pipeline = gst_pipeline_new ("rtsp-arhive-writer"); 
-  rtspsrc = gst_element_factory_make ("rtspsrc", "rtspsrc");
-  rtph264depay = gst_element_factory_make ("rtph264depay", "rtph264depay");
-  h264parse = gst_element_factory_make ("h264parse", "h264parse");
+  splitmuxsink = gst_element_factory_make ("splitmuxsink", "splitmuxsink");
   decodebin = gst_element_factory_make ("decodebin", "decodebin");
   autovideosink = gst_element_factory_make ("autovideosink", "autovideosink");
 
-  if (!pipeline || !rtspsrc || !rtph264depay || !h264parse || !decodebin || !autovideosink) {
+  if (!pipeline || !splitmuxsink || !decodebin || !autovideosink) {
     g_printerr ("One of element is not initialized");
     return -1;
   }
 
-  g_object_set (G_OBJECT (rtspsrc),
-      "location", "rtsp://192.168.1.108:554/cam/realmonitor?channel=1&subtype=0",
-      "user-id", "admin",
-      "user-pw", "1236987q",
+  g_object_set (G_OBJECT (splitmuxsink),
+      "location", rtspUrl,
+      "user-id", login,
+      "user-pw", password,
       NULL);
 
-  gst_bin_add_many (GST_BIN (pipeline), rtspsrc, rtph264depay, h264parse, decodebin, autovideosink, NULL);
+  gst_bin_add_many (GST_BIN (pipeline), splitmuxsink, decodebin, autovideosink, NULL);
 
-  if (!gst_element_link_many (rtph264depay, h264parse, decodebin, NULL)) {
+  if (!gst_element_link_many (splitmuxsink, decodebin, autovideosink, NULL)) {
     g_error ("Linked failed");
-    return -1;
-  }
-
-  if (!g_signal_connect (rtspsrc, "pad-added", G_CALLBACK (on_pad_added), rtph264depay)) {
-    g_error ("Linked failed #2");
-    return -1;
-  }
-
-  if (!g_signal_connect (decodebin, "pad-added", G_CALLBACK (on_pad_added), autovideosink)) {
-    g_error ("Linked failed #3");
     return -1;
   }
 

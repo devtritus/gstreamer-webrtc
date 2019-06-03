@@ -1,0 +1,22 @@
+#!/bin/sh
+
+case $1 in
+  "arc")
+    filename="rtsp_archive_writer.c"
+    binname="rtsp_archive_writer"
+    ;;
+  "str")
+    filename="rtsp_streamer.c"
+    binname="rtsp_streamer"
+    ;;
+  "play-arc")
+    filename="rtsp_playback_archive.c"
+    binname="rtsp_playback_archive"
+    ;;
+  *)
+    echo "Name not found"
+    exit
+    ;;
+esac
+
+gcc files/$filename -o ../bin/$binname `pkg-config --cflags --libs gstreamer-1.0`

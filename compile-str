@@ -1,1 +1,0 @@
-gcc rtsp_streamer.c -o ../bin/rtsp-streamer `pkg-config --cflags --libs gstreamer-1.0`

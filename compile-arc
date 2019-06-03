@@ -1,1 +1,0 @@
-gcc rtsp_archive_writer.c -o ../bin/rtsp-archive-writer `pkg-config --cflags --libs gstreamer-1.0`
