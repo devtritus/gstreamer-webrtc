@@ -1,2 +1,2 @@
-cd client
+cd webclient
 node server.js
