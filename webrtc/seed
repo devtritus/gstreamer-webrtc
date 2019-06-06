@@ -1,0 +1,1 @@
+../../bin/webrtc-sendrecv --peer-id=$1
