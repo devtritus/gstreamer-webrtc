@@ -345,8 +345,7 @@ start_pipeline (void)
   /* This is the gstwebrtc entry point where we create the offer and so on. It
    * will be called when the pipeline goes to PLAYING. */
   g_signal_connect (webrtc1, "on-negotiation-needed",
-      G_CALLBACK (on_negotiation_needed), NULL);
-  /* We need to transmit this ICE candidate to the browser via the websockets
+      G_CALLBACK (on_negotiation_needed), NULL); /* We need to transmit this ICE candidate to the browser via the websockets
    * signalling server. Incoming ice candidates from the browser need to be
    * added by us too, see on_server_message() */
   g_signal_connect (webrtc1, "on-ice-candidate",
