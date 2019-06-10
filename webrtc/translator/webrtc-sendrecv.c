@@ -273,7 +273,7 @@ on_negotiation_needed (GstElement * element, gpointer user_data)
 
 #define STUN_SERVER " stun-server=stun://stun.l.google.com:19302 "
 #define RTP_CAPS_OPUS "application/x-rtp,media=audio,encoding-name=OPUS,payload="
-#define RTP_CAPS_VP8 "application/x-rtp,media=video,encoding-name=H264"
+#define RTP_CAPS_VP8 "application/x-rtp,media=video,encoding-name=H264,payload="
 
 static void
 data_channel_on_error (GObject * dc, gpointer user_data)
@@ -330,7 +330,7 @@ start_pipeline (void)
   GError *error = NULL;
   pipe1 = 
       gst_parse_launch ("webrtcbin bundle-policy=max-bundle name=sendrecv " STUN_SERVER
-      "rtspsrc user-id=admin user-pw=Barco1984 location=rtsp://172.17.13.213:554/cam/realmonitor?channel=1&subtype=0 ! sendrecv. ",
+      "rtspsrc user-id=admin user-pw=1236987q location=rtsp://192.168.1.108:554/cam/realmonitor?channel=1&subtype=0 ! queue ! application/x-rtp, media=video, encoding-name=H264, payload=96 ! sendrecv. ",
       &error);
 
   if (error) {
