@@ -330,7 +330,7 @@ start_pipeline (void)
   GError *error = NULL;
   pipe1 = 
       gst_parse_launch ("webrtcbin bundle-policy=max-bundle name=sendrecv " STUN_SERVER
-      " rtspsrc user-id=admin user-pw=Barco1984 location=rtsp://172.17.13.212:554/cam/realmonitor?channel=1&subtype=0 ! queue ! application/x-rtp, media=video, encoding-name=H264, payload=96 ! sendrecv. ",
+      " rtspsrc user-id=admin user-pw=Barco1984 location=rtsp://172.17.13.212:554/cam/realmonitor?channel=1&subtype=0 ! rtph264depay ! rtph264pay config-interval=-1 sprop-parameter-sets=ddd ! sendrecv. ",
       &error);
 
   if (error) {
