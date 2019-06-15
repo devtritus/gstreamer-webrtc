@@ -76,7 +76,6 @@ function resetVideo() {
 
 // SDP offer received from peer, set remote description and create an answer
 function onIncomingSDP(sdp) {
-    sdp.sdp = sdp.sdp.replace(/;sprop-parameter-sets=.+\r\n/, "\r\n");
     peer_connection.setRemoteDescription(sdp).then(() => {
         setStatus("Remote SDP set");
         if (sdp.type != "offer")
