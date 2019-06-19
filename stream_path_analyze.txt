@@ -58,74 +58,72 @@ codec_data=(buffer)01640032ffe1003067640032ac1b1a802a00bfff016e020202800001f4000
 level=(string)5,
 profile=(string)high
 
-H264PARSE SRC
+  H264PARSE SINK
 
-/GstPipeline:pipeline0/GstDecodeBin:decodebin0/GstH264Parse:h264parse0.GstPad:src:
-caps = video/x-h264,
-stream-format=(string)avc,
-alignment=(string)au,
-codec_data=(buffer)01640032ffe1003067640032ac1b1a802a00bfff016e020202800001f4000061a8743001f400002328177971a1800fa000011940bbcb850001000568ee383000,
-level=(string)5,
-profile=(string)high,
-pixel-aspect-ratio=(fraction)1/1,
-width=(int)2688,
-height=(int)1520,
-framerate=(fraction)25/1,
-interlace-mode=(string)progressive,
-chroma-format=(string)4:2:0,
-bit-depth-luma=(uint)8,
-bit-depth-chroma=(uint)8,
-parsed=(boolean)true
+  /GstPipeline:pipeline0/GstDecodeBin:decodebin0/GstH264Parse:h264parse0.GstPad:sink:
+  caps = video/x-h264,
+  stream-format=(string)avc,
+  alignment=(string)au,
+  codec_data=(buffer)01640032ffe1003067640032ac1b1a802a00bfff016e020202800001f4000061a8743001f400002328177971a1800fa000011940bbcb850001000568ee383000,
+  level=(string)5,
+  profile=(string)high
 
-H264PARSE SINK
+  H264PARSE SRC
 
-/GstPipeline:pipeline0/GstDecodeBin:decodebin0/GstH264Parse:h264parse0.GstPad:sink:
-caps = video/x-h264,
-stream-format=(string)avc,
-alignment=(string)au,
-codec_data=(buffer)01640032ffe1003067640032ac1b1a802a00bfff016e020202800001f4000061a8743001f400002328177971a1800fa000011940bbcb850001000568ee383000,
-level=(string)5,
-profile=(string)high
+  /GstPipeline:pipeline0/GstDecodeBin:decodebin0/GstH264Parse:h264parse0.GstPad:src:
+  caps = video/x-h264,
+  stream-format=(string)avc,
+  alignment=(string)au,
+  codec_data=(buffer)01640032ffe1003067640032ac1b1a802a00bfff016e020202800001f4000061a8743001f400002328177971a1800fa000011940bbcb850001000568ee383000,
+  level=(string)5,
+  profile=(string)high,
+  pixel-aspect-ratio=(fraction)1/1,
+  width=(int)2688,height=(int)1520,
+  framerate=(fraction)25/1,
+  interlace-mode=(string)progressive,
+  chroma-format=(string)4:2:0,
+  bit-depth-luma=(uint)8,
+  bit-depth-chroma=(uint)8,
+  parsed=(boolean)true
 
-AVDEC H264 SINK
+  AVDEC H264 SINK
 
-/GstPipeline:pipeline0/GstDecodeBin:decodebin0/avdec_h264:avdec_h264-0.GstPad:sink:
-caps = video/x-h264,
-stream-format=(string)avc,
-alignment=(string)au,
-codec_data=(buffer)01640032ffe1003067640032ac1b1a802a00bfff016e020202800001f4000061a8743001f400002328177971a1800fa000011940bbcb850001000568ee383000,
-level=(string)5,
-profile=(string)high,
-pixel-aspect-ratio=(fraction)1/1,
-width=(int)2688,height=(int)1520,
-framerate=(fraction)25/1,
-interlace-mode=(string)progressive,
-chroma-format=(string)4:2:0,
-bit-depth-luma=(uint)8,
-bit-depth-chroma=(uint)8,
-parsed=(boolean)true
+  /GstPipeline:pipeline0/GstDecodeBin:decodebin0/avdec_h264:avdec_h264-0.GstPad:sink:
+  caps = video/x-h264,
+  stream-format=(string)avc,
+  alignment=(string)au,
+  codec_data=(buffer)01640032ffe1003067640032ac1b1a802a00bfff016e020202800001f4000061a8743001f400002328177971a1800fa000011940bbcb850001000568ee383000,
+  level=(string)5,
+  profile=(string)high,
+  pixel-aspect-ratio=(fraction)1/1,
+  width=(int)2688,height=(int)1520,
+  framerate=(fraction)25/1,
+  interlace-mode=(string)progressive,
+  chroma-format=(string)4:2:0,
+  bit-depth-luma=(uint)8,
+  bit-depth-chroma=(uint)8,
+  parsed=(boolean)true
 
-AVDEC H264 SRC
+  AVDEC H264 SRC
 
-/GstPipeline:pipeline0/GstDecodeBin:decodebin0/avdec_h264:avdec_h264-0.GstPad:src:
-caps = video/x-raw,
-format=(string)I420,
-width=(int)2688,
-height=(int)1520,
-interlace-mode=(string)progressive,
-multiview-mode=(string)mono,
-multiview-flags=(GstVideoMultiviewFlagsSet)0:ffffffff:/right-view-first/left-flipped/left-flopped/right-flipped/right-flopped/half-aspect/mixed-mono,
-pixel-aspect-ratio=(fraction)1/1,chroma-site=(string)mpeg2,
-colorimetry=(string)1:3:5:1,
-framerate=(fraction)25/1
+  /GstPipeline:pipeline0/GstDecodeBin:decodebin0/avdec_h264:avdec_h264-0.GstPad:src:
+  caps = video/x-raw,
+  format=(string)I420,
+  width=(int)2688,height=(int)1520,
+  interlace-mode=(string)progressive,
+  multiview-mode=(string)mono,
+  multiview-flags=(GstVideoMultiviewFlagsSet)0:ffffffff:/right-view-first/left-flipped/left-flopped/right-flipped/right-flopped/half-aspect/mixed-mono,
+  pixel-aspect-ratio=(fraction)1/1,
+  chroma-site=(string)mpeg2,
+  colorimetry=(string)1:3:5:1,
+  framerate=(fraction)25/1
 
 DECODEBIN SRC
 
 /GstPipeline:pipeline0/GstDecodeBin:decodebin0.GstDecodePad:src_0.GstProxyPad:proxypad17:
 caps = video/x-raw,
 format=(string)I420,
-width=(int)2688,
-height=(int)1520,
+width=(int)2688,height=(int)1520,
 interlace-mode=(string)progressive,
 multiview-mode=(string)mono,
 multiview-flags=(GstVideoMultiviewFlagsSet)0:ffffffff:/right-view-first/left-flipped/left-flopped/right-flipped/right-flopped/half-aspect/mixed-mono,
@@ -138,12 +136,12 @@ X264ENC SINK
 /GstPipeline:pipeline0/GstX264Enc:x264enc0.GstPad:sink:
 caps = video/x-raw,
 format=(string)I420,
-width=(int)2688,
-height=(int)1520,
+width=(int)2688,height=(int)1520,
 interlace-mode=(string)progressive,
 multiview-mode=(string)mono,
 multiview-flags=(GstVideoMultiviewFlagsSet)0:ffffffff:/right-view-first/left-flipped/left-flopped/right-flipped/right-flopped/half-aspect/mixed-mono,
-pixel-aspect-ratio=(fraction)1/1,chroma-site=(string)mpeg2,
+pixel-aspect-ratio=(fraction)1/1,
+chroma-site=(string)mpeg2,
 colorimetry=(string)1:3:5:1,
 framerate=(fraction)25/1
 
@@ -156,12 +154,31 @@ stream-format=(string)avc,
 alignment=(string)au,
 level=(string)5,
 profile=(string)high,
-width=(int)2688,
-height=(int)1520,pixel-aspect-ratio=(fraction)1/1,
-framerate=(fraction)25/1, interlace-mode=(string)progressive, colorimetry=(string)1:3:5:1,
+width=(int)2688,height=(int)1520,
+pixel-aspect-ratio=(fraction)1/1,
+framerate=(fraction)25/1,
+interlace-mode=(string)progressive,
+colorimetry=(string)1:3:5:1,
 chroma-site=(string)mpeg2,
 multiview-mode=(string)mono,
 multiview-flags=(GstVideoMultiviewFlagsSet)0:ffffffff:/right-view-first/left-flipped/left-flopped/right-flipped/right-flopped/half-aspect/mixed-mono
+
+/GstPipeline:pipeline0/GstX264Enc:x264enc0.GstPad:src:
+caps = video/x-h264,
+codec_data=(buffer)01640032ffe1001e67640032acd9402a00bfb016e02020280000030008000003019478c18cb001000568ebecb22c,
+stream-format=(string)avc,
+alignment=(string)au,
+level=(string)5,
+profile=(string)high,
+width=(int)2688,height=(int)1520,
+pixel-aspect-ratio=(fraction)1/1,
+framerate=(fraction)25/1,
+interlace-mode=(string)progressive,
+colorimetry=(string)1:3:5:1,
+chroma-site=(string)mpeg2,
+multiview-mode=(string)mono,
+multiview-flags=(GstVideoMultiviewFlagsSet)0:ffffffff:/right-view-first/left-flipped/left-flopped/right-flipped/right-flopped/half-aspect/mixed-mono
+
 
 
 RTP H264 SINK
@@ -173,8 +190,8 @@ stream-format=(string)avc,
 alignment=(string)au,
 level=(string)5,
 profile=(string)high,
-width=(int)2688,
-height=(int)1520,pixel-aspect-ratio=(fraction)1/1,
+width=(int)2688,height=(int)1520,
+pixel-aspect-ratio=(fraction)1/1,
 framerate=(fraction)25/1,
 interlace-mode=(string)progressive,
 colorimetry=(string)1:3:5:1,
@@ -211,3 +228,117 @@ payload=(int)96,ssrc=(uint)621533988,
 timestamp-offset=(uint)2352500812,
 seqnum-offset=(uint)13708,
 a-framerate=(string)25
+
+
+---------------------------------------------------------------------------------------------------------------------------
+TO DECODER
+
+caps = video/x-h264,
+stream-format=(string)avc,
+alignment=(string)au,
+level=(string)5,
+profile=(string)high,
+pixel-aspect-ratio=(fraction)1/1,
+width=(int)2688,height=(int)1520,
+framerate=(fraction)25/1,
+interlace-mode=(string)progressive,
+
+codec_data=(buffer)01640032ffe1003067640032ac1b1a802a00bfff016e020202800001f4000061a8743001f400002328177971a1800fa000011940bbcb850001000568ee383000,
+
+chroma-format=(string)4:2:0,
+bit-depth-luma=(uint)8,
+bit-depth-chroma=(uint)8,
+parsed=(boolean)true
+
+FROM ENCODER
+
+/GstPipeline:pipeline0/GstX264Enc:x264enc0.GstPad:src:
+caps = video/x-h264,
+stream-format=(string)avc,
+alignment=(string)au,
+level=(string)5,
+profile=(string)high,
+pixel-aspect-ratio=(fraction)1/1,
+width=(int)2688,height=(int)1520,
+framerate=(fraction)25/1,
+interlace-mode=(string)progressive,
+
+codec_data=(buffer)01640032ffe1001e67640032acd9402a00bfb016e02020280000030008000003019478c18cb001000568ebecb22c,
+
+colorimetry=(string)1:3:5:1,
+chroma-site=(string)mpeg2,
+multiview-mode=(string)mono,
+multiview-flags=(GstVideoMultiviewFlagsSet)0:ffffffff:/right-view-first/left-flipped/left-flopped/right-flipped/right-flopped/half-aspect/mixed-mono
+
+---------------------------------------------------------------------------------------------------------------------------
+FROM CAMERA
+
+/GstPipeline:pipeline0/GstRTSPSrc:rtspsrc0/GstUDPSrc:udpsrc1:
+caps = application/x-rtp,
+media=(string)video,
+payload=(int)96,
+clock-rate=(int)90000,
+encoding-name=(string)H264,
+packetization-mode=(string)1,
+profile-level-id=(string)640032,
+a-framerate=(string)25.000000,
+
+sprop-parameter-sets=(string)"Z2QAMqwbGoAqAL//AW4CAgKAAAH0AABhqHQwAfQAACMoF3lxoYAPoAABGUC7y4UA\,aO44MAA\=",
+ssrc=(uint)160957161
+
+a-packetization-supported=(string)DH,
+a-rtppayload-supported=(string)DH,
+a-recvonly=(string)"",
+
+FROM CAMERA -> H264 DEPAY -> H264 PAY
+
+/GstPipeline:pipeline0/GstRtpH264Pay:rtph264pay0.GstPad:src:
+caps = application/x-rtp,
+media=(string)video,
+payload=(int)96,
+clock-rate=(int)90000,
+encoding-name=(string)H264,
+packetization-mode=(string)1,
+profile-level-id=(string)640032,
+
+sprop-parameter-sets=(string)"Z2QAMqwbGoAqAL//AW4CAgKAAAH0AABhqHQwAfQAACMoF3lxoYAPoAABGUC7y4UA\,aO44MAA\=",
+ssrc=(uint)1600084739,
+
+timestamp-offset=(uint)1750329041,
+seqnum-offset=(uint)10838
+
+FROM CAMERA -> H264 DEPAY -> H264 PARSE -> H264 PAY
+
+/GstPipeline:pipeline0/GstRtpH264Pay:rtph264pay0.GstPad:src:
+caps = application/x-rtp,
+media=(string)video,
+payload=(int)96,
+clock-rate=(int)90000,
+encoding-name=(string)H264,
+packetization-mode=(string)1,
+profile-level-id=(string)640032,
+a-framerate=(string)25
+
+sprop-parameter-sets=(string)"Z2QAMqwbGoAqAL//AW4CAgKAAAH0AABhqHQwAfQAACMoF3lxoYAPoAABGUC7y4UA\,aO44MAA\=",
+ssrc=(uint)1059333586,
+
+timestamp-offset=(uint)509652382,
+seqnum-offset=(uint)3919,
+
+TO WEBRTC
+
+/GstPipeline:pipeline0/GstRtpH264Pay:rtph264pay0.GstPad:src:
+caps = application/x-rtp,
+media=(string)video,
+payload=(int)96,
+clock-rate=(int)90000,
+encoding-name=(string)H264,
+packetization-mode=(string)1,
+profile-level-id=(string)640032,
+a-framerate=(string)25
+
+sprop-parameter-sets=(string)"Z2QAMqzZQCoAv7AW4CAgKAAAAwAIAAADAZR4wYyw\,aOvssiw\=",
+ssrc=(uint)621533988,
+
+timestamp-offset=(uint)2352500812,
+seqnum-offset=(uint)13708,

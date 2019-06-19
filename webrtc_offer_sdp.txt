@@ -1,0 +1,32 @@
+"v=0
+o=- 409468805166624782 0 IN IP4 0.0.0.0
+s=-
+t=0 0
+a=ice-options:trickle
+a=group:BUNDLE video0 application1
+m=video 9 UDP/TLS/RTP/SAVPF 96
+c=IN IP4 0.0.0.0
+a=setup:actpass
+a=ice-ufrag:WhZe0N80Krf0QSlzdJpWANpRaRAlE9Oi
+a=ice-pwd:irwfT2avBqPRx01doleqGQDNh8H9sfgf
+a=rtcp-mux
+a=rtcp-rsize
+a=sendrecv
+a=rtpmap:96 H264/90000
+a=rtcp-fb:96 nack pli
+a=framerate:25
+a=fmtp:96 packetization-mode=1;profile-level-id=640032;sprop-parameter-sets=Z2QAMqwbGoAqAL//AW4CAgKAAAH0AABhqHQwAfQAACMoF3lxoYAPoAABGUC7y4UA,aO44MAA=
+a=ssrc:166240088 msid:user3704846446@host-a6c1ef6d webrtctransceiver0
+a=ssrc:166240088 cname:user3704846446@host-a6c1ef6d
+a=mid:video0
+a=fingerprint:sha-256 30:1B:AD:31:BF:F1:EF:58:76:94:55:03:07:55:D8:C6:1B:4C:DB:4F:A5:AE:F3:E2:B7:77:CF:88:9E:7F:F3:E7
+m=application 0 UDP/DTLS/SCTP webrtc-datachannel
+c=IN IP4 0.0.0.0
+a=setup:actpass
+a=ice-ufrag:WhZe0N80Krf0QSlzdJpWANpRaRAlE9Oi
+a=ice-pwd:irwfT2avBqPRx01doleqGQDNh8H9sfgf
+a=bundle-only
+a=mid:application1
+a=sctp-port:5000
+a=fingerprint:sha-256 30:1B:AD:31:BF:F1:EF:58:76:94:55:03:07:55:D8:C6:1B:4C:DB:4F:A5:AE:F3:E2:B7:77:CF:88:9E:7F:F3:E7
+"
