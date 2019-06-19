@@ -1,3 +1,5 @@
+NOT WORKING
+
 "v=0
 o=- 409468805166624782 0 IN IP4 0.0.0.0
 s=-
@@ -29,4 +31,73 @@ a=bundle-only
 a=mid:application1
 a=sctp-port:5000
 a=fingerprint:sha-256 30:1B:AD:31:BF:F1:EF:58:76:94:55:03:07:55:D8:C6:1B:4C:DB:4F:A5:AE:F3:E2:B7:77:CF:88:9E:7F:F3:E7
+"
+WITHOUT PADS application/x-rtp,media=video,encoding-name=H264,payload=96 
+
+"v=0
+o=- 2439925016346002725 0 IN IP4 0.0.0.0
+s=-
+t=0 0
+a=ice-options:trickle
+a=group:BUNDLE video0 application1
+m=video 9 UDP/TLS/RTP/SAVPF 96
+c=IN IP4 0.0.0.0
+a=setup:actpass
+a=ice-ufrag:g5r44vmMuG4XCom4qu3vjZJqkDi9XlW9
+a=ice-pwd:cgkNnWjGx/xm+shrimgqJ9mO4jhrAmn6
+a=rtcp-mux
+a=rtcp-rsize
+a=sendrecv
+a=rtpmap:96 H264/90000
+a=rtcp-fb:96 nack pli
+a=framerate:25
+a=fmtp:96 packetization-mode=1;profile-level-id=640032;sprop-parameter-sets=Z2QAMqzZQCoAv7AW4CAgKAAAAwAIAAADAZR4wYyw,aOvssiw=
+a=ssrc:3042342626 msid:user181018067@host-808d33e0 webrtctransceiver0
+a=ssrc:3042342626 cname:user181018067@host-808d33e0
+a=mid:video0
+a=fingerprint:sha-256 A3:C4:0A:3F:FB:E7:03:0F:3B:AA:CD:42:45:80:E8:7B:BF:7B:CD:58:E6:59:E7:D6:41:8B:11:EA:44:41:6B:F3
+m=application 0 UDP/DTLS/SCTP webrtc-datachannel
+c=IN IP4 0.0.0.0
+a=setup:actpass
+a=ice-ufrag:g5r44vmMuG4XCom4qu3vjZJqkDi9XlW9
+a=ice-pwd:cgkNnWjGx/xm+shrimgqJ9mO4jhrAmn6
+a=bundle-only
+a=mid:application1
+a=sctp-port:5000
+a=fingerprint:sha-256 A3:C4:0A:3F:FB:E7:03:0F:3B:AA:CD:42:45:80:E8:7B:BF:7B:CD:58:E6:59:E7:D6:41:8B:11:EA:44:41:6B:F3
+"
+
+WORKING
+
+"v=0
+o=- 1091604581912990109 0 IN IP4 0.0.0.0
+s=-
+t=0 0
+a=ice-options:trickle
+a=group:BUNDLE video0 application1
+m=video 9 UDP/TLS/RTP/SAVPF 96
+c=IN IP4 0.0.0.0
+a=setup:actpass
+a=ice-ufrag:xYxAIKFLTT6SEbKQfKsP0g8QA5c2vYTs
+a=ice-pwd:oCQrS2uOEJmNsd4K2ZN40lL3mUSir1Sp
+a=rtcp-mux
+a=rtcp-rsize
+a=sendrecv
+a=rtpmap:96 H264/90000
+a=rtcp-fb:96 nack pli
+a=framerate:25
+a=fmtp:96 packetization-mode=1;profile-level-id=42c032;sprop-parameter-sets=Z0LAMtkAKgC/sBbgICAoAAADAAgAAAMBlHjBkkA=,aMuMsg==
+a=ssrc:3297660161 msid:user788148589@host-7f829e03 webrtctransceiver0
+a=ssrc:3297660161 cname:user788148589@host-7f829e03
+a=mid:video0
+a=fingerprint:sha-256 85:87:98:99:42:9D:55:37:D8:39:8F:85:32:68:A8:88:BF:71:04:00:89:E0:B3:38:0D:0D:43:BA:89:E2:23:70
+m=application 0 UDP/DTLS/SCTP webrtc-datachannel
+c=IN IP4 0.0.0.0
+a=setup:actpass
+a=ice-ufrag:xYxAIKFLTT6SEbKQfKsP0g8QA5c2vYTs
+a=ice-pwd:oCQrS2uOEJmNsd4K2ZN40lL3mUSir1Sp
+a=bundle-only
+a=mid:application1
+a=sctp-port:5000
+a=fingerprint:sha-256 85:87:98:99:42:9D:55:37:D8:39:8F:85:32:68:A8:88:BF:71:04:00:89:E0:B3:38:0D:0D:43:BA:89:E2:23:70
 "
