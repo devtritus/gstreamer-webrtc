@@ -47,12 +47,18 @@ static enum AppState app_state = 0;
 static const gchar *peer_id = NULL;
 static const gchar *server_url = "wss://localhost:8443";
 static gboolean disable_ssl = FALSE;
+static const gchar *camera_login = NULL;
+static const gchar *camera_password = NULL;
+static const gchar *camera_location = NULL;
 
 static GOptionEntry entries[] =
 {
   { "peer-id", 0, 0, G_OPTION_ARG_STRING, &peer_id, "String ID of the peer to connect to", "ID" },
   { "server", 0, 0, G_OPTION_ARG_STRING, &server_url, "Signalling server to connect to", "URL" },
   { "disable-ssl", 0, 0, G_OPTION_ARG_NONE, &disable_ssl, "Disable ssl", NULL },
+  { "camera-login", 0, 0, G_OPTION_ARG_STRING, &camera_login, "Camera user", NULL },
+  { "camera-password", 0, 0, G_OPTION_ARG_STRING, &camera_password, "Camera password", NULL },
+  { "camera-location", 0, 0, G_OPTION_ARG_STRING, &camera_location, "Camera location", NULL },
   { NULL },
 };
 
@@ -328,10 +334,17 @@ start_pipeline (void)
 {
   GstStateChangeReturn ret;
   GError *error = NULL;
-  pipe1 = 
-      gst_parse_launch ("webrtcbin bundle-policy=max-bundle name=sendrecv " STUN_SERVER
-      " rtspsrc user-id=admin user-pw=Barco1984 location=rtsp://172.17.13.212:554/cam/realmonitor?channel=1&subtype=0 ! rtph264depay ! decodebin ! x264enc ! rtph264pay ! queue ! application/x-rtp,media=video,encoding-name=H264,payload=96 ! sendrecv. ",
-      &error);
+  gchar command[512];
+
+  g_snprintf(command, 512,
+          "rtspsrc user-id=%s user-pw=%s location=%s"
+          " ! rtph264depay ! decodebin ! x264enc ! rtph264pay"
+          " ! application/x-rtp,media=video,encoding-name=H264,payload=96 ! webrtcbin bundle-policy=max-bundle name=sendrecv " STUN_SERVER,
+          camera_login, camera_password, camera_location);
+
+  g_print("Pipeline:\n%s\n", command);
+
+  pipe1 = gst_parse_launch (command, &error);
 
   if (error) {
     g_printerr ("Failed to parse launch: %s\n", error->message);
