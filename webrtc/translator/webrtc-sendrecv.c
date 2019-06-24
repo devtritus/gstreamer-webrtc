@@ -338,7 +338,7 @@ start_pipeline (void)
 
   g_snprintf(command, 512,
           "rtspsrc user-id=%s user-pw=%s location=%s"
-          " ! rtph264depay ! rtph264pay config-interval=-1"
+          " ! rtph264depay ! rtph264pay config-interval=10"
           " ! application/x-rtp,media=video,encoding-name=H264,payload=96 ! webrtcbin bundle-policy=max-bundle name=sendrecv " STUN_SERVER,
           camera_login, camera_password, camera_location);
 
