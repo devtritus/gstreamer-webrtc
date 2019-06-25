@@ -76,7 +76,7 @@ function resetVideo() {
 
 // SDP offer received from peer, set remote description and create an answer
 function onIncomingSDP(sdp) {
-    sdp.sdp = sdp.sdp.replace(/profile-level-id.+;/, "");
+    //sdp.sdp = sdp.sdp.replace(/profile-level-id.+;/, "");
     //sdp.sdp = sdp.sdp.replace("4d4028", "42E01F"); //very funny, very funny https://groups.google.com/forum/#!topic/discuss-webrtc/EKLBlSaiYdU
     peer_connection.setRemoteDescription(sdp).then(() => {
         setStatus("Remote SDP set");

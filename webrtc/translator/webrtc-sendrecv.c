@@ -219,11 +219,17 @@ send_sdp_offer (GstWebRTCSessionDescription * offer)
 {
   gchar *text;
   JsonObject *msg, *sdp;
+  int i;
 
   if (app_state < PEER_CALL_NEGOTIATING) {
     cleanup_and_quit_loop ("Can't send offer, not in call", APP_STATE_ERROR);
     return;
   }
+
+  gst_sdp_media_get_attribute_val(
+      (GstSDPMedia *)&g_array_index(offer->sdp->medias, GstSDPMedia, 0),
+      "fmtp", "96 profile-level-id=42e01f;packetization-mode=1");
+
 
   text = gst_sdp_message_as_text (offer->sdp);
   g_print ("Sending offer:\n%s\n", text);
