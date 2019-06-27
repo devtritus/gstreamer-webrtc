@@ -228,11 +228,15 @@ send_sdp_offer (GstWebRTCSessionDescription * offer)
   }
   video = (GstSDPMedia *)&g_array_index(offer->sdp->medias, GstSDPMedia, 0);
 
+
+  gchar const *key = "fmtp";
   for(i = 0; i < gst_sdp_media_attributes_len(video); i++) {
-    const GstSDPAttribute* attr = gst_sdp_media_get_attribute(video, i);
-    GstSDPAttribute* attr0 = attr;
-    if(!g_strcmp0(attr->key, "fmtp")) {
-      gst_sdp_attribute_set(attr0, "fmtp", "96 profile-level-id=42e01f;packetization-mode=1");
+    const GstSDPAttribute *attr = gst_sdp_media_get_attribute(video, i);
+    if(!g_strcmp0(attr->key, key)) {
+      GstSDPAttribute *new_attr = g_new0(GstSDPAttribute, 1);
+      gst_sdp_attribute_set(new_attr, key, "96 profile-level-id=42e01f;packetization-mode=1");
+      gst_sdp_message_replace_attribute (offer->sdp, i, new_attr);
+      break;
     }
   }
 
