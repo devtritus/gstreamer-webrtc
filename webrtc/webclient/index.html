@@ -11,6 +11,7 @@
 -->
 <html>
   <head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <style>
       .error { color: red; }
     </style>
@@ -22,14 +23,36 @@
   </head>
 
   <body>
-    <div><video id="stream" autoplay playsinline>Your browser doesn't support video</video></div>
-    <div>Status: <span id="status">unknown</span></div>
-    <div><textarea id="text" cols=40 rows=4></textarea></div>
-    <div>Our id is <b id="peer-id">unknown</b></div>
-    <br/>
-    <div>
-      <div>getUserMedia constraints being used:</div>
-      <div><textarea id="constraints" cols=40 rows=4></textarea></div>
+    <div class="container">
+      <div class="row">
+        <video id="stream" autoplay playsinline>Your browser doesn't support video</video>
+      </div>
+      <div class="row">
+        <div class="col-md">
+          <div>Status: <span id="status">unknown</span></div>
+          <div>
+            <textarea id="text" cols=40 rows=4></textarea>
+          </div>
+        </div>
+        <div class="col-md">
+          <div>
+            <div>getUserMedia constraints being used:</div>
+            <div><textarea id="constraints" cols=40 rows=4></textarea></div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md">
+          Text container
+          <div><textarea id="text-channel-area" cols=40 rows=2></textarea></div>
+          <button onclick="sendText()" class="btn btn-default">Send</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md">
+          Our id is <span style="font-size:20px;font-style:italic" id="peer-id">unknown</span>
+        </div>
+      </div>
     </div>
   </body>
 </html>

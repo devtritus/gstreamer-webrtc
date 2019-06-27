@@ -304,3 +304,11 @@ function createCall(msg) {
 
     setStatus("Created peer connection for call, waiting for SDP");
 }
+
+function sendText() {
+    var textChannelArea = document.getElementById('text-channel-area');
+    var data = textChannelArea.value;
+    console.log("Send: " + data);
+    send_channel.send(data);
+}
+
