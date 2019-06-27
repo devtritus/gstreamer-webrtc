@@ -235,7 +235,7 @@ send_sdp_offer (GstWebRTCSessionDescription * offer)
     if(!g_strcmp0(attr->key, key)) {
       GstSDPAttribute *new_attr = g_new0(GstSDPAttribute, 1);
       gst_sdp_attribute_set(new_attr, key, "96 profile-level-id=42e01f;packetization-mode=1");
-      gst_sdp_message_replace_attribute (offer->sdp, i, new_attr);
+      gst_sdp_media_replace_attribute (video, i, new_attr);
       break;
     }
   }
