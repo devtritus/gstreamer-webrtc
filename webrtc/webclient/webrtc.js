@@ -312,3 +312,12 @@ function sendText() {
     send_channel.send(data);
 }
 
+function start() {
+    console.log("START");
+    send_channel.send("start");
+}
+
+function stop() {
+    console.log("STOP");
+    send_channel.send("stop");
+}

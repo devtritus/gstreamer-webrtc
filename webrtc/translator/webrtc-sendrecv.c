@@ -328,6 +328,14 @@ static void
 data_channel_on_message_string (GObject * dc, gchar *str, gpointer user_data)
 {
   g_print ("Received data channel message: %s\n", str);
+  if(!g_strcmp0(str, "start"))
+  {
+    g_print ("'Start' was entered\n");
+  }
+  else if(!g_strcmp0(str, "stop"))
+  {
+    g_print ("'Stop' was entered\n");
+  }
 }
 
 static void
