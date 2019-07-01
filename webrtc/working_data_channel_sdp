@@ -57,3 +57,36 @@ a=fingerprint:sha-256 DC:DC:4B:21:DC:CC:A4:BD:1A:1E:12:3C:59:98:2B:06:36:66:F6:D
 a=setup:active
 a=mid:application0
 a=sctp-port:5000
+
+1
+2
+3
+on_negotiation_needed
+4
+promise
+5
+Created data channel
+6
+Starting pipeline
+0:00:00.257803171 24104 0x7ff574087400 WARN                GST_PADS gstpad.c:4230:gst_pad_peer_query:<nicesrc1:src> could not send sticky events
+0:00:00.257857040 24104 0x7ff574087450 WARN                GST_PADS gstpad.c:4230:gst_pad_peer_query:<nicesrc0:src> could not send sticky events
+on_offer_created
+Sending offer:
+
+1
+2
+3
+on_negotiation_needed
+promise
+4
+on_offer_created
+Sending offer:
+v=0
+o=- 1830457423923140933 0 IN IP4 0.0.0.0
+s=-
+t=0 0
+a=ice-options:trickle
+
+5
+Created data channel
+6

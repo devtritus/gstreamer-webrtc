@@ -248,6 +248,7 @@ on_offer_created (GstPromise * promise, gpointer user_data)
 {
   GstWebRTCSessionDescription *offer = NULL;
   const GstStructure *reply;
+  g_print("on_offer_created\n");
 
   g_assert_cmphex (app_state, ==, PEER_CALL_NEGOTIATING);
 
@@ -272,8 +273,12 @@ on_negotiation_needed (GstElement * element, gpointer user_data)
 {
   GstPromise *promise;
 
+  g_print("on_negotiation_needed\n");
   app_state = PEER_CALL_NEGOTIATING;
   promise = gst_promise_new_with_change_func (on_offer_created, user_data, NULL);;
+
+
+  g_print("promise\n");
   g_signal_emit_by_name (webrtc1, "create-offer", NULL, promise);
 }
 
@@ -359,7 +364,7 @@ create_data_channel_pipeline ()
     g_printerr ("One element could not be created\n");
   }
 
-  g_object_set (G_OBJECT (webrtcbin), "stun-server", STUN_SERVER, NULL);
+  g_object_set (G_OBJECT (webrtcbin), "stun-server", STUN_SERVER, "bundle-policy", GST_WEBRTC_BUNDLE_POLICY_MAX_BUNDLE, NULL);
 
   //bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
   //bus_watch_id = gst_bus_add_watch (bus, data_channel_call, loop);
@@ -386,26 +391,35 @@ start_pipeline (void)
 
   webrtc1 = gst_bin_get_by_name (GST_BIN (pipe1), "webrtc-data-channel");
   g_assert_nonnull (webrtc1);
+  g_print("0\n");
+   
 
   /* This is the gstwebrtc entry point where we create the offer and so on. It
    * will be called when the pipeline goes to PLAYING. */
   g_signal_connect (webrtc1, "on-negotiation-needed",
-      G_CALLBACK (on_negotiation_needed), NULL); /* We need to transmit this ICE candidate to the browser via the websockets
+      G_CALLBACK (on_negotiation_needed), NULL);/* We need to transmit this ICE candidate to the browser via the websockets
+
    * signalling server. Incoming ice candidates from the browser need to be
    * added by us too, see on_server_message() */
+  g_print("2\n");
   g_signal_connect (webrtc1, "on-ice-candidate",
       G_CALLBACK (send_ice_candidate_message), NULL);
 
+  g_print("3\n");
   gst_element_set_state (pipe1, GST_STATE_READY);
 
+  g_print("4\n");
   g_signal_emit_by_name (webrtc1, "create-data-channel", "channel", NULL,
       &send_channel);
+
+  g_print("5\n");
   if (send_channel) {
     g_print ("Created data channel\n");
     connect_data_channel_signals (send_channel);
   } else {
     g_print ("Could not create data channel, is usrsctp available?\n");
   }
+  g_print("6\n");
 
   g_signal_connect (webrtc1, "on-data-channel", G_CALLBACK (on_data_channel),
       NULL);
