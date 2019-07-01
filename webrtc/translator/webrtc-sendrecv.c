@@ -219,32 +219,11 @@ send_sdp_offer (GstWebRTCSessionDescription * offer)
 {
   gchar *text;
   JsonObject *msg, *sdp;
-  GstSDPMedia *video;
-  int i;
 
   if (app_state < PEER_CALL_NEGOTIATING) {
     cleanup_and_quit_loop ("Can't send offer, not in call", APP_STATE_ERROR);
     return;
   }
-  video = (GstSDPMedia *)&g_array_index(offer->sdp->medias, GstSDPMedia, 0);
-
-
-  gchar const *key = "fmtp";
-  for(i = 0; i < gst_sdp_media_attributes_len(video); i++) {
-    const GstSDPAttribute *attr = gst_sdp_media_get_attribute(video, i);
-    if(!g_strcmp0(attr->key, key)) {
-      GstSDPAttribute *new_attr = g_new0(GstSDPAttribute, 1);
-      gst_sdp_attribute_set(new_attr, key, "96 profile-level-id=42e01f;packetization-mode=1");
-      gst_sdp_media_replace_attribute (video, i, new_attr);
-      break;
-    }
-  }
-
-  gst_sdp_media_get_attribute(video, 0);
-  /*gst_sdp_media_get_attribute_val(
-      (GstSDPMedia *)&g_array_index(offer->sdp->medias, GstSDPMedia, 0),
-      "fmtp", "96 profile-level-id=42e01f;packetization-mode=1");
-  */
 
   text = gst_sdp_message_as_text (offer->sdp);
   g_print ("Sending offer:\n%s\n", text);

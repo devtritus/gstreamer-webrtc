@@ -1,0 +1,59 @@
+Connecting to server...
+> GET  HTTP/1.1
+> Soup-Debug-Timestamp: 1561974186
+> Soup-Debug: SoupSession 1 (0x564f7dd89100), SoupMessage 1 (0x564f7e0a98e0), SoupSocket 1 (0x564f7db94ab0)
+> Host: localhost:8443
+> Upgrade: websocket
+> Connection: Upgrade
+> Sec-WebSocket-Key: 4nTNjh6dhcfvKFXxGFkrGQ==
+> Sec-WebSocket-Version: 13
+> Accept-Encoding: gzip, deflate
+  
+< HTTP/1.1 101 Switching Protocols
+< Soup-Debug-Timestamp: 1561974186
+< Soup-Debug: SoupMessage 1 (0x564f7e0a98e0)
+< Upgrade: websocket
+< Connection: Upgrade
+< Sec-WebSocket-Accept: rrupKvdnZ2AVpn573cJjr9oeqVo=
+< Date: Mon, 01 Jul 2019 09:43:06 GMT
+< Server: Python/3.7 websockets/7.0
+  
+Connected to signalling server
+Registering id 7904 with server
+Registered with server
+Setting up signalling server call with 7437
+Created data channel
+Starting pipeline
+0:00:00.284979841 22530 0x7fa098086c50 WARN                GST_PADS gstpad.c:4230:gst_pad_peer_query:<nicesrc0:src> could not send sticky events
+0:00:00.285002773 22530 0x7fa098086c00 WARN                GST_PADS gstpad.c:4230:gst_pad_peer_query:<nicesrc1:src> could not send sticky events
+Sending offer:
+v=0
+o=- 176372540148824489 0 IN IP4 0.0.0.0
+s=-
+t=0 0
+a=ice-options:trickle
+m=application 9 UDP/DTLS/SCTP webrtc-datachannel
+c=IN IP4 0.0.0.0
+a=setup:actpass
+a=ice-ufrag:DSlxkwjEpKTAzYLM6ti5mjeOjCGMAim7
+a=ice-pwd:61zaeLo4Us0zWGDZ745Z3Zehjhrk/OYT
+a=mid:application0
+a=sctp-port:5000
+a=fingerprint:sha-256 7E:26:34:10:78:69:D3:C2:CD:8A:68:8B:29:01:FB:33:DA:5E:72:12:98:FE:9A:E9:14:58:80:76:B6:49:E7:F8
+
+Received answer:
+v=0
+o=- 1087302237806824603 2 IN IP4 127.0.0.1
+s=-
+t=0 0
+a=msid-semantic: WMS
+m=application 9 UDP/DTLS/SCTP webrtc-datachannel
+c=IN IP4 0.0.0.0
+b=AS:30
+a=ice-ufrag:NYlq
+a=ice-pwd:1PD9DS1PGQJRtOG6Xv40QDr1
+a=ice-options:trickle
+a=fingerprint:sha-256 DC:DC:4B:21:DC:CC:A4:BD:1A:1E:12:3C:59:98:2B:06:36:66:F6:D8:D0:CF:1F:0E:85:49:97:6F:42:5F:98:49
+a=setup:active
+a=mid:application0
+a=sctp-port:5000
