@@ -298,7 +298,9 @@ on_negotiation_needed (GstElement * element, gpointer user_data)
   g_signal_emit_by_name (webrtc1, "create-offer", NULL, promise);
 }
 
-#define STUN_SERVER "stun://stun.l.google.com:19302"
+#define STUN_SERVER " stun-server=stun://stun.l.google.com:19302 "
+#define RTP_CAPS_OPUS "application/x-rtp,media=audio,encoding-name=OPUS,payload="
+#define RTP_CAPS_VP8 "application/x-rtp,media=video,encoding-name=H264,payload="
 
 static void
 data_channel_on_error (GObject * dc, gpointer user_data)
@@ -357,47 +359,21 @@ on_data_channel (GstElement * webrtc, GObject * data_channel, gpointer user_data
 }
 
 static gboolean
-data_channel_call (GstBus *bus,
-          GstMessage *msg,
-          gpointer data)
-{
-  return TRUE;
-}
-
-static GstElement *
-create_data_channel_pipeline ()
-{
-  //GMainLoop *loop;
-
-  GstElement *pipeline, *webrtcbin;
-  //GstBus *bus;
-  //guint bus_watch_id;
-
-  pipeline  = gst_pipeline_new ("data-channel-pipeline");
-  webrtcbin = gst_element_factory_make ("webrtcbin", "webrtc-data-channel"); 
-
-  if (!pipeline || !webrtcbin) {
-    g_printerr ("One element could not be created\n");
-  }
-
-  g_object_set (G_OBJECT (webrtcbin), "stun-server", STUN_SERVER, NULL);
-
-  //bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
-  //bus_watch_id = gst_bus_add_watch (bus, data_channel_call, loop);
-  //gst_object_unref (bus);
-
-  gst_bin_add_many (GST_BIN (pipeline), webrtcbin, NULL);
-
-  return pipeline;
-}
-
-static gboolean
 start_pipeline (void)
 {
   GstStateChangeReturn ret;
   GError *error = NULL;
+  gchar command[512];
 
-  pipe1 = create_data_channel_pipeline();
+  g_snprintf(command, 512,
+          "rtspsrc user-id=%s user-pw=%s location=%s"
+          " ! rtph264depay ! rtph264pay config-interval=10"
+          " ! application/x-rtp,media=video,encoding-name=H264,payload=96 ! webrtcbin bundle-policy=max-bundle name=sendrecv " STUN_SERVER,
+          camera_login, camera_password, camera_location);
+
+  g_print("Pipeline:\n%s\n", command);
+
+  pipe1 = gst_parse_launch (command, &error);
 
   if (error) {
     g_printerr ("Failed to parse launch: %s\n", error->message);
@@ -405,7 +381,7 @@ start_pipeline (void)
     goto err;
   }
 
-  webrtc1 = gst_bin_get_by_name (GST_BIN (pipe1), "webrtc-data-channel");
+  webrtc1 = gst_bin_get_by_name (GST_BIN (pipe1), "sendrecv");
   g_assert_nonnull (webrtc1);
 
   /* This is the gstwebrtc entry point where we create the offer and so on. It
