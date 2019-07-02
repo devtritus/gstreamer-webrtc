@@ -279,6 +279,7 @@ on_negotiation_needed (GstElement * element, gpointer user_data)
 
 
   g_print("promise\n");
+  //слишком рано
   g_signal_emit_by_name (webrtc1, "create-offer", NULL, promise);
 }
 
@@ -348,6 +349,26 @@ data_channel_call (GstBus *bus,
   return TRUE;
 }
 
+static void print_element_state(GstElement *element, gchar *message)
+{
+  GstState state;
+  gchar *state_name;
+
+  gst_element_get_state (element, &state, NULL, GST_CLOCK_TIME_NONE);
+  if (state == 0) {
+    state_name = "VOID_PENDING";
+  } else if (state == 1) {
+    state_name = "NULL";
+  } else if (state == 2) {
+    state_name = "READY";
+  } else if (state == 3) {
+    state_name = "PAUSED";
+  } else if (state == 4) {
+    state_name = "PLAYING";
+  }
+  g_print("%s - [%s]\n", message, state_name);
+}
+
 static GstElement *
 create_data_channel_pipeline ()
 {
@@ -372,6 +393,7 @@ create_data_channel_pipeline ()
 
   gst_bin_add_many (GST_BIN (pipeline), webrtcbin, NULL);
 
+  //gst_element_set_state (GST_ELEMENT (pipeline), GST_STATE_NULL);
   return pipeline;
 }
 
@@ -391,45 +413,39 @@ start_pipeline (void)
 
   webrtc1 = gst_bin_get_by_name (GST_BIN (pipe1), "webrtc-data-channel");
   g_assert_nonnull (webrtc1);
-  g_print("0\n");
-   
 
   /* This is the gstwebrtc entry point where we create the offer and so on. It
    * will be called when the pipeline goes to PLAYING. */
   g_signal_connect (webrtc1, "on-negotiation-needed",
-      G_CALLBACK (on_negotiation_needed), NULL);/* We need to transmit this ICE candidate to the browser via the websockets
+      G_CALLBACK (on_negotiation_needed), NULL);
 
+  /* We need to transmit this ICE candidate to the browser via the websockets
    * signalling server. Incoming ice candidates from the browser need to be
    * added by us too, see on_server_message() */
-  g_print("2\n");
   g_signal_connect (webrtc1, "on-ice-candidate",
       G_CALLBACK (send_ice_candidate_message), NULL);
 
-  g_print("3\n");
   gst_element_set_state (pipe1, GST_STATE_READY);
 
-  g_print("4\n");
   g_signal_emit_by_name (webrtc1, "create-data-channel", "channel", NULL,
       &send_channel);
 
-  g_print("5\n");
   if (send_channel) {
     g_print ("Created data channel\n");
     connect_data_channel_signals (send_channel);
   } else {
     g_print ("Could not create data channel, is usrsctp available?\n");
   }
-  g_print("6\n");
 
   g_signal_connect (webrtc1, "on-data-channel", G_CALLBACK (on_data_channel),
       NULL);
   /* Incoming streams will be exposed via this signal */
-  g_signal_connect (webrtc1, "pad-added", G_CALLBACK (on_incoming_stream),
-      pipe1);
+  /* g_signal_connect (webrtc1, "pad-added", G_CALLBACK (on_incoming_stream), pipe1); */
   /* Lifetime is the same as the pipeline itself */
   gst_object_unref (webrtc1);
 
   g_print ("Starting pipeline\n");
+
   ret = gst_element_set_state (GST_ELEMENT (pipe1), GST_STATE_PLAYING);
   if (ret == GST_STATE_CHANGE_FAILURE)
     goto err;
