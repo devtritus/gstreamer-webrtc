@@ -7,12 +7,14 @@ var default_peer_id;
 var rtc_configuration = {iceServers: [{urls: "stun:stun.services.mozilla.com"},
                                       {urls: "stun:stun.l.google.com:19302"}]};
 var connect_attempts = 0;
-var peer_connection;
+var data_channel_peer_connection;
 var send_channel;
 var ws_conn;
 
+var id = 0;
+
 function getOurId() {
-    return Math.floor(Math.random() * (100 - 10) + 10).toString();
+    return ++id;
 }
 
 function resetState() {
@@ -54,21 +56,21 @@ function resetVideo() {
 
 // SDP offer received from peer, set remote description and create an answer
 function onIncomingSDP(sdp) {
-    peer_connection.setRemoteDescription(sdp).then(() => {
+    data_channel_peer_connection.setRemoteDescription(sdp).then(() => {
         setStatus("Remote SDP set");
         if (sdp.type != "offer")
             return;
         setStatus("Got SDP offer");
-        peer_connection.createAnswer().then(onLocalDescription).catch(setError);
+        data_channel_peer_connection.createAnswer().then(onLocalDescription).catch(setError);
     }).catch(setError);
 }
 
 // Local description was set, send it to peer
 function onLocalDescription(desc) {
     console.log("Got local description: " + JSON.stringify(desc));
-    peer_connection.setLocalDescription(desc).then(function() {
+    data_channel_peer_connection.setLocalDescription(desc).then(function() {
         setStatus("Sending SDP answer");
-        sdp = {'sdp': peer_connection.localDescription}
+        sdp = {'sdp': data_channel_peer_connection.localDescription}
         ws_conn.send(JSON.stringify(sdp));
     });
 }
@@ -76,7 +78,7 @@ function onLocalDescription(desc) {
 // ICE candidate received from peer, add it to the peer connection
 function onIncomingICE(ice) {
     var candidate = new RTCIceCandidate(ice);
-    peer_connection.addIceCandidate(candidate).catch(setError);
+    data_channel_peer_connection.addIceCandidate(candidate).catch(setError);
 }
 
 function onServerMessage(event) {
@@ -103,7 +105,7 @@ function onServerMessage(event) {
             }
 
             // Incoming JSON signals the beginning of a call
-            if (!peer_connection)
+            if (!data_channel_peer_connection)
                 createCall(msg);
 
             if (msg.sdp != null) {
@@ -120,9 +122,9 @@ function onServerClose(event) {
     setStatus('Disconnected from server');
     resetVideo();
 
-    if (peer_connection) {
-        peer_connection.close();
-        peer_connection = null;
+    if (data_channel_peer_connection) {
+        data_channel_peer_connection.close();
+        data_channel_peer_connection = null;
     }
 
     // Reset after a second
@@ -221,20 +223,20 @@ function createCall(msg) {
 
     console.log('Creating RTCPeerConnection');
 
-    peer_connection = new RTCPeerConnection(rtc_configuration);
-    send_channel = peer_connection.createDataChannel('label', null);
+    data_channel_peer_connection = new RTCPeerConnection(rtc_configuration);
+    send_channel = data_channel_peer_connection.createDataChannel('label', null);
     send_channel.onopen = handleDataChannelOpen;
     send_channel.onmessage = handleDataChannelMessageReceived;
     send_channel.onerror = handleDataChannelError;
     send_channel.onclose = handleDataChannelClose;
-    peer_connection.ondatachannel = onDataChannel;
-    peer_connection.ontrack = onRemoteTrack;
+    data_channel_peer_connection.ondatachannel = onDataChannel;
+    data_channel_peer_connection.ontrack = onRemoteTrack;
 
     if (!msg.sdp) {
         console.log("WARNING: First message wasn't an SDP message!?");
     }
 
-    peer_connection.onicecandidate = (event) => {
+    data_channel_peer_connection.onicecandidate = (event) => {
 	// We have a candidate, send it to the remote party with the
 	// same uuid
 	if (event.candidate == null) {
