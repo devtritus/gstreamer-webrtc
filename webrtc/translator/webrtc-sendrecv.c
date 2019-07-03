@@ -52,8 +52,12 @@ static const gchar *camera_password = NULL;
 static const gchar *camera_location = NULL;
 
 typedef struct {
-  gint id;
+  gchar *peer_id;
   enum ChannelState state;
+} Channel;
+
+typedef struct {
+  Channel *channel;
   gchar *login;
   gchar *password;
   gchar *location;
@@ -362,8 +366,7 @@ start_pipeline (void)
 
   /* We need to transmit this ICE candidate to the browser via the websockets
    * signalling server. Incoming ice candidates from the browser need to be
-   * added by us too, see on_server_message() */
-  g_signal_connect (webrtc1, "on-ice-candidate", 
+   * added by us too, see on_server_message() */ g_signal_connect (webrtc1, "on-ice-candidate", 
       G_CALLBACK (send_ice_candidate_message), NULL);
 
   gst_element_set_state (pipe1, GST_STATE_READY);
@@ -440,6 +443,7 @@ static void
 on_server_message (SoupWebsocketConnection * conn, SoupWebsocketDataType type,
     GBytes * message, gpointer user_data)
 {
+  Channel *channel = (Channel *)user_data;
   gchar *text;
 
   switch (type) {
@@ -459,7 +463,7 @@ on_server_message (SoupWebsocketConnection * conn, SoupWebsocketDataType type,
 
   /* Server has accepted our registration, we are ready to send commands */
   if (g_strcmp0 (text, "HELLO") == 0) {
-    if (app_state != SERVER_REGISTERING) {
+    if (channel->state != SERVER_REGISTERING) {
       cleanup_and_quit_loop ("ERROR: Received HELLO when not registering",
           APP_STATE_ERROR);
       goto out;
@@ -590,9 +594,7 @@ out:
 }
 
 static void
-on_server_connected (SoupSession * session, GAsyncResult * res,
-    SoupMessage *msg)
-{
+on_server_connected (SoupSession * session, GAsyncResult * res, Channel *channel) {
   GError *error = NULL;
 
   ws_conn = soup_session_websocket_connect_finish (session, res, &error);
@@ -608,7 +610,7 @@ on_server_connected (SoupSession * session, GAsyncResult * res,
   g_print ("Connected to signalling server\n");
 
   g_signal_connect (ws_conn, "closed", G_CALLBACK (on_server_closed), NULL);
-  g_signal_connect (ws_conn, "message", G_CALLBACK (on_server_message), NULL);
+  g_signal_connect (ws_conn, "message", G_CALLBACK (on_server_message), channel);
 
   /* Register with the server so it knows about us and can accept commands */
   register_with_server ();
@@ -618,7 +620,7 @@ on_server_connected (SoupSession * session, GAsyncResult * res,
  * Connect to the signalling server. This is the entrypoint for everything else.
  */
 static void
-connect_to_websocket_server_async (void)
+connect_to_websocket_server_async (Channel *channel)
 {
   SoupLogger *logger;
   SoupMessage *message;
@@ -640,7 +642,7 @@ connect_to_websocket_server_async (void)
 
   /* Once connected, we will register */
   soup_session_websocket_connect_async (session, message, NULL, NULL, NULL,
-      (GAsyncReadyCallback) on_server_connected, message);
+      (GAsyncReadyCallback) on_server_connected, channel);
   app_state = SERVER_CONNECTING;
 }
 
@@ -701,7 +703,10 @@ main (int argc, char *argv[])
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  connect_to_websocket_server_async ();
+  Channel channel;
+  channel.peer_id = peer_id;
+
+  connect_to_websocket_server_async (&channel);
 
   g_main_loop_run (loop);
   g_main_loop_unref (loop);
