@@ -110,6 +110,8 @@ function onServerMessage(event) {
 
             if (msg.sdp != null) {
                 onIncomingSDP(msg.sdp);
+                //Заранее открываем следующее соединение, для очередного потока
+                window.setTimeout(websocketServerConnect, 1000);
             } else if (msg.ice != null) {
                 onIncomingICE(msg.ice);
             } else {

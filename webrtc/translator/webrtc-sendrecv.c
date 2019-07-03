@@ -18,7 +18,7 @@
 
 #include <string.h>
 
-enum AppState {
+enum ChannelState {
   APP_STATE_UNKNOWN = 0,
   APP_STATE_ERROR = 1, /* generic error */
   SERVER_CONNECTING = 1000,
@@ -43,13 +43,21 @@ static GstElement *pipe1, *webrtc1;
 static GObject *send_channel, *receive_channel;
 
 static SoupWebsocketConnection *ws_conn = NULL;
-static enum AppState app_state = 0;
+static enum ChannelState app_state = 0;
 static const gchar *peer_id = NULL;
 static const gchar *server_url = "wss://localhost:8443";
 static gboolean disable_ssl = FALSE;
 static const gchar *camera_login = NULL;
 static const gchar *camera_password = NULL;
 static const gchar *camera_location = NULL;
+
+typedef struct {
+  gint id;
+  enum ChannelState state;
+  gchar *login;
+  gchar *password;
+  gchar *location;
+} VideoChannel;  
 
 static GOptionEntry entries[] =
 {
@@ -63,7 +71,7 @@ static GOptionEntry entries[] =
 };
 
 static gboolean
-cleanup_and_quit_loop (const gchar * msg, enum AppState state)
+cleanup_and_quit_loop (const gchar * msg, enum ChannelState state)
 {
   if (msg)
     g_printerr ("%s\n", msg);
@@ -643,8 +651,7 @@ check_plugins (void)
   gboolean ret;
   GstPlugin *plugin;
   GstRegistry *registry;
-  const gchar *needed[] = { "opus", "vpx", "nice", "webrtc", "dtls", "srtp",
-      "rtpmanager", "videotestsrc", "audiotestsrc", NULL};
+  const gchar *needed[] = { "vpx", "nice", "webrtc", "dtls", "srtp", "rtpmanager", NULL};
 
   registry = gst_registry_get ();
   ret = TRUE;
