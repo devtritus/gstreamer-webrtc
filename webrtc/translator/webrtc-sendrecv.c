@@ -157,6 +157,22 @@ send_sdp_offer (GstWebRTCSessionDescription * offer, Channel *channel)
     return;
   }
 
+  if(channel->video != NULL) {
+    int i;
+    GstSDPMedia *video = (GstSDPMedia *)&g_array_index(offer->sdp->medias, GstSDPMedia, 0);
+
+    gchar const *key = "fmtp";
+    for(i = 0; i < gst_sdp_media_attributes_len(video); i++) {
+      const GstSDPAttribute *attr = gst_sdp_media_get_attribute(video, i);
+      if(!g_strcmp0(attr->key, key)) {
+        GstSDPAttribute *new_attr = g_new0(GstSDPAttribute, 1);
+        gst_sdp_attribute_set(new_attr, key, "96 profile-level-id=42e01f;packetization-mode=1");
+        gst_sdp_media_replace_attribute (video, i, new_attr);
+        break;
+      }
+    }
+  }
+
   text = gst_sdp_message_as_text (offer->sdp);
   g_print ("Sending offer:\n%s\n", text);
 
@@ -223,6 +239,7 @@ data_channel_on_message_string (GObject * dc, gchar *str, gpointer user_data)
   g_print ("Received data channel message: %s\n", str);
   if(!g_strcmp0(str, "start"))
   {
+    g_print ("'Start' was entered\n");
     Channel *video_channel = malloc(sizeof(Channel));
     int next_id = atoi(data_channel->peer_id) + 1;
     char id_string[16];
@@ -234,7 +251,6 @@ data_channel_on_message_string (GObject * dc, gchar *str, gpointer user_data)
     video->location = camera_location;
     video_channel->video = video;
     connect_to_websocket_server_async (video_channel);
-    g_print ("'Start' was entered\n");
   }
   else if(!g_strcmp0(str, "stop"))
   {
@@ -365,8 +381,23 @@ start_pipeline (Channel *channel)
   GstStateChangeReturn ret;
   GError *error = NULL;
 
-  if(channel->video) {
+  g_print("CHECK NULL\n");
+  if(channel->video == NULL) {
+    g_print("VIDEO IS NULL\n");
     pipe1 = create_data_channel_pipeline();
+  } else {
+    gchar command[512];
+    VideoChannel video_channel = *channel->video;
+
+    g_snprintf(command, 512,
+            "rtspsrc user-id=%s user-pw=%s location=%s"
+            " ! rtph264depay ! rtph264pay config-interval=10"
+            " ! application/x-rtp,media=video,encoding-name=H264,payload=96 ! webrtcbin bundle-policy=max-bundle name=webrtc-data-channel stun-server=" STUN_SERVER,
+            video_channel.login, video_channel.password, video_channel.location);
+
+    g_print("Pipeline:\n%s\n", command);
+
+    pipe1 = gst_parse_launch (command, &error);
   }
 
   if (error) {
@@ -725,6 +756,7 @@ main (int argc, char *argv[])
 
   Channel channel;
   channel.peer_id = peer_id;
+  channel.video = NULL;
 
   connect_to_websocket_server_async (&channel);
 
