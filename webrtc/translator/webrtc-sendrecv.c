@@ -8,6 +8,7 @@
  */
 #include <gst/gst.h>
 #include <gst/sdp/sdp.h>
+#include <stdio.h>
 
 #define GST_USE_UNSTABLE_API
 #include <gst/webrtc/webrtc.h>
@@ -72,6 +73,8 @@ static GOptionEntry entries[] =
   { "camera-location", 0, 0, G_OPTION_ARG_STRING, &camera_location, "Camera location", NULL },
   { NULL },
 };
+
+static void connect_to_websocket_server_async (Channel *channel);
 
 static gboolean
 cleanup_and_quit_loop (const gchar * msg, Channel *channel, enum ChannelState state)
@@ -220,10 +223,17 @@ data_channel_on_message_string (GObject * dc, gchar *str, gpointer user_data)
   g_print ("Received data channel message: %s\n", str);
   if(!g_strcmp0(str, "start"))
   {
-    Channel video_channel;
-    int next_id = parseInt(data_channel->peer_id) + 1;
-    video_channel.peer_id = next_int; 
-    connect_to_websocket_server_async (&video_channel);
+    Channel *video_channel = malloc(sizeof(Channel));
+    int next_id = atoi(data_channel->peer_id) + 1;
+    char id_string[16];
+    sprintf(id_string, "%d", next_id); 
+    video_channel->peer_id = id_string;
+    VideoChannel *video = malloc(sizeof(VideoChannel));
+    video->login = camera_login;
+    video->password = camera_password;
+    video->location = camera_location;
+    video_channel->video = video;
+    connect_to_websocket_server_async (video_channel);
     g_print ("'Start' was entered\n");
   }
   else if(!g_strcmp0(str, "stop"))
@@ -355,7 +365,9 @@ start_pipeline (Channel *channel)
   GstStateChangeReturn ret;
   GError *error = NULL;
 
-  pipe1 = create_data_channel_pipeline();
+  if(channel->video) {
+    pipe1 = create_data_channel_pipeline();
+  }
 
   if (error) {
     g_printerr ("Failed to parse launch: %s\n", error->message);
