@@ -1,8 +1,6 @@
 // Set this to override the automatic detection in websocketServerConnect()
 var ws_server;
 var ws_port;
-// Set this to use a specific peer id instead of a random one
-var default_peer_id;
 // Override with your own STUN servers if you want
 var rtc_configuration = {iceServers: [{urls: "stun:stun.services.mozilla.com"},
                                       {urls: "stun:stun.l.google.com:19302"}]};
@@ -31,8 +29,8 @@ function handleIncomingError(error, index) {
     resetState(index);
 }
 
-function getVideoElement() {
-    return document.getElementById("stream");
+function getVideoElement(index) {
+    return document.getElementById("stream_" + index);
 }
 
 function setStatus(text) {
@@ -50,9 +48,12 @@ function setError(text) {
     span.classList.add('error');
 }
 
-function resetVideo() {
+function resetVideo(index) {
     // Reset the video element and stop showing the last received frame
-    var videoElement = getVideoElement();
+    var videoElement = getVideoElement(index);
+    if(!videoElement) {
+      return;
+    }
     videoElement.pause();
     videoElement.src = "";
     videoElement.load();
@@ -122,6 +123,11 @@ function onServerMessage(event) {
             if (msg.sdp != null) {
                 onIncomingSDP(msg.sdp, currentId);
                 //Заранее открываем следующее соединение, для очередного потока
+                /*const videoTag = "<video id='stream_"+ currentId + "' style='width:80%' autoplay playsinline>Your browser doesn't support video</video>"
+                var template = document.createElement('template');
+                var html = videoTag.trim(); // Never return a text node of whitespace as the result
+                template.innerHTML = html;
+                document.getElementById("video-container").appendChild(template.content.firstChild);*/
                 window.setTimeout(websocketServerConnect, 1000);
             } else if (msg.ice != null) {
                 onIncomingICE(msg.ice, data_connection);
@@ -133,7 +139,7 @@ function onServerMessage(event) {
 
 function onServerClose(event, index) {
     setStatus('Disconnected from server');
-    resetVideo();
+    resetVideo(index);
     let data_channel = getDataChannel();
 
     if (data_channel) {
@@ -162,7 +168,7 @@ function websocketServerConnect() {
     span.classList.remove('error');
     span.textContent = '';
     // Fetch the peer id to use
-    peer_id = default_peer_id || getOurId();
+    peer_id = getOurId();
     ws_port = ws_port || '8443';
     if (window.location.protocol.startsWith ("file")) {
         ws_server = ws_server || "127.0.0.1";
@@ -186,10 +192,10 @@ function websocketServerConnect() {
     connections[peer_id - 1] = ws_conn;
 }
 
-function onRemoteTrack(event) {
-    if (getVideoElement().srcObject !== event.streams[0]) {
+function onRemoteTrack(event, index) {
+    if (getVideoElement(index).srcObject !== event.streams[0]) {
         console.log('Incoming stream');
-        getVideoElement().srcObject = event.streams[0];
+        getVideoElement(index).srcObject = event.streams[0];
     }
 }
 
@@ -245,7 +251,7 @@ function createCall(msg, index) {
     send_channel.onerror = handleDataChannelError;
     send_channel.onclose = handleDataChannelClose;
     data_channel_peer_connection.ondatachannel = onDataChannel;
-    data_channel_peer_connection.ontrack = onRemoteTrack;
+    data_channel_peer_connection.ontrack = (event) => onRemoteTrack(event, index);
 
     if (!msg.sdp) {
         console.log("WARNING: First message wasn't an SDP message!?");
