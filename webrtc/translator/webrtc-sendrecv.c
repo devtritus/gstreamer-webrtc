@@ -50,17 +50,17 @@ static const gchar *camera_password = NULL;
 static const gchar *camera_location = NULL;
 
 typedef struct {
-  gchar *peer_id;
-  enum ChannelState state;
-  SoupWebsocketConnection *conn;
-} Channel;
-
-typedef struct {
-  Channel *channel;
   gchar *login;
   gchar *password;
   gchar *location;
 } VideoChannel;  
+
+typedef struct {
+  gchar *peer_id;
+  enum ChannelState state;
+  SoupWebsocketConnection *conn;
+  VideoChannel *video;
+} Channel;
 
 static GOptionEntry entries[] =
 {
@@ -216,9 +216,14 @@ data_channel_on_close (GObject * dc, gpointer user_data)
 static void
 data_channel_on_message_string (GObject * dc, gchar *str, gpointer user_data)
 {
+  Channel *data_channel = (Channel *) user_data;
   g_print ("Received data channel message: %s\n", str);
   if(!g_strcmp0(str, "start"))
   {
+    Channel video_channel;
+    int next_id = parseInt(data_channel->peer_id) + 1;
+    video_channel.peer_id = next_int; 
+    connect_to_websocket_server_async (&video_channel);
     g_print ("'Start' was entered\n");
   }
   else if(!g_strcmp0(str, "stop"))
@@ -237,7 +242,7 @@ connect_data_channel_signals (GObject * data_channel, gpointer user_data)
   g_signal_connect (data_channel, "on-close", G_CALLBACK (data_channel_on_close),
       user_data);
   g_signal_connect (data_channel, "on-message-string", G_CALLBACK (data_channel_on_message_string),
-      NULL);
+      user_data);
 }
 
 static void
