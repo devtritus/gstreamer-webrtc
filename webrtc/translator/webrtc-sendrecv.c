@@ -42,8 +42,6 @@ static GMainLoop *loop;
 static GstElement *pipe1, *webrtc1;
 static GObject *send_channel, *receive_channel;
 
-static SoupWebsocketConnection *ws_conn = NULL;
-static enum ChannelState app_state = 0;
 static const gchar *peer_id = NULL;
 static const gchar *server_url = "wss://localhost:8443";
 static gboolean disable_ssl = FALSE;
@@ -54,6 +52,7 @@ static const gchar *camera_location = NULL;
 typedef struct {
   gchar *peer_id;
   enum ChannelState state;
+  SoupWebsocketConnection *conn;
 } Channel;
 
 typedef struct {
@@ -75,20 +74,20 @@ static GOptionEntry entries[] =
 };
 
 static gboolean
-cleanup_and_quit_loop (const gchar * msg, enum ChannelState state)
+cleanup_and_quit_loop (const gchar * msg, Channel *channel, enum ChannelState state)
 {
   if (msg)
     g_printerr ("%s\n", msg);
   if (state > 0)
-    app_state = state;
+    channel->state = state;
 
-  if (ws_conn) {
-    if (soup_websocket_connection_get_state (ws_conn) ==
+  if (channel->conn) {
+    if (soup_websocket_connection_get_state (channel->conn) ==
         SOUP_WEBSOCKET_STATE_OPEN)
       /* This will call us again */
-      soup_websocket_connection_close (ws_conn, 1000, "");
+      soup_websocket_connection_close (channel->conn, 1000, "");
     else
-      g_object_unref (ws_conn);
+      g_object_unref (channel->conn);
   }
 
   if (loop) {
@@ -125,9 +124,10 @@ send_ice_candidate_message (GstElement * webrtc G_GNUC_UNUSED, guint mlineindex,
 {
   gchar *text;
   JsonObject *ice, *msg;
+  Channel *channel = (Channel *)user_data;
 
-  if (app_state < PEER_CALL_NEGOTIATING) {
-    cleanup_and_quit_loop ("Can't send ICE, not in call", APP_STATE_ERROR);
+  if (channel->state < PEER_CALL_NEGOTIATING) {
+    cleanup_and_quit_loop ("Can't send ICE, not in call", channel, APP_STATE_ERROR);
     return;
   }
 
@@ -139,18 +139,18 @@ send_ice_candidate_message (GstElement * webrtc G_GNUC_UNUSED, guint mlineindex,
   text = get_string_from_json_object (msg);
   json_object_unref (msg);
 
-  soup_websocket_connection_send_text (ws_conn, text);
+  soup_websocket_connection_send_text (channel->conn, text);
   g_free (text);
 }
 
 static void
-send_sdp_offer (GstWebRTCSessionDescription * offer)
+send_sdp_offer (GstWebRTCSessionDescription * offer, Channel *channel)
 {
   gchar *text;
   JsonObject *msg, *sdp;
 
-  if (app_state < PEER_CALL_NEGOTIATING) {
-    cleanup_and_quit_loop ("Can't send offer, not in call", APP_STATE_ERROR);
+  if (channel->state < PEER_CALL_NEGOTIATING) {
+    cleanup_and_quit_loop ("Can't send offer, not in call", channel, APP_STATE_ERROR);
     return;
   }
 
@@ -167,7 +167,7 @@ send_sdp_offer (GstWebRTCSessionDescription * offer)
   text = get_string_from_json_object (msg);
   json_object_unref (msg);
 
-  soup_websocket_connection_send_text (ws_conn, text);
+  soup_websocket_connection_send_text (channel->conn, text);
   g_free (text);
 }
 
@@ -194,7 +194,7 @@ static void print_element_state(GstElement *element, gchar *message)
 static void
 data_channel_on_error (GObject * dc, gpointer user_data)
 {
-  cleanup_and_quit_loop ("Data channel error", 0);
+  cleanup_and_quit_loop ("Data channel error", (Channel *) user_data, 0);
 }
 
 static void
@@ -210,7 +210,7 @@ data_channel_on_open (GObject * dc, gpointer user_data)
 static void
 data_channel_on_close (GObject * dc, gpointer user_data)
 {
-  cleanup_and_quit_loop ("Data channel closed", 0);
+  cleanup_and_quit_loop ("Data channel closed", (Channel *) user_data, 0);
 }
 
 static void
@@ -228,14 +228,14 @@ data_channel_on_message_string (GObject * dc, gchar *str, gpointer user_data)
 }
 
 static void
-connect_data_channel_signals (GObject * data_channel)
+connect_data_channel_signals (GObject * data_channel, gpointer user_data)
 {
   g_signal_connect (data_channel, "on-error", G_CALLBACK (data_channel_on_error),
-      NULL);
+      user_data);
   g_signal_connect (data_channel, "on-open", G_CALLBACK (data_channel_on_open),
       NULL);
   g_signal_connect (data_channel, "on-close", G_CALLBACK (data_channel_on_close),
-      NULL);
+      user_data);
   g_signal_connect (data_channel, "on-message-string", G_CALLBACK (data_channel_on_message_string),
       NULL);
 }
@@ -243,7 +243,7 @@ connect_data_channel_signals (GObject * data_channel)
 static void
 on_data_channel (GstElement * webrtc, GObject * data_channel, gpointer user_data)
 {
-  connect_data_channel_signals (data_channel);
+  connect_data_channel_signals (data_channel, user_data);
   receive_channel = data_channel;
 }
 
@@ -251,8 +251,9 @@ on_data_channel (GstElement * webrtc, GObject * data_channel, gpointer user_data
 static void
 on_offer_created (GstPromise * promise, gpointer user_data)
 {
+  Channel *channel = (Channel *)user_data;
   g_signal_connect (webrtc1, "on-data-channel", G_CALLBACK (on_data_channel),
-      NULL);
+      user_data);
   /* Incoming streams will be exposed via this signal */
   /* g_signal_connect (webrtc1, "pad-added", G_CALLBACK (on_incoming_stream), pipe1); */
   /* Lifetime is the same as the pipeline itself */
@@ -261,7 +262,7 @@ on_offer_created (GstPromise * promise, gpointer user_data)
   const GstStructure *reply;
   g_print("on_offer_created\n");
 
-  g_assert_cmphex (app_state, ==, PEER_CALL_NEGOTIATING);
+  g_assert_cmphex (channel->state, ==, PEER_CALL_NEGOTIATING);
 
   g_assert_cmphex (gst_promise_wait(promise), ==, GST_PROMISE_RESULT_REPLIED);
   reply = gst_promise_get_reply (promise);
@@ -275,7 +276,7 @@ on_offer_created (GstPromise * promise, gpointer user_data)
   gst_promise_unref (promise);
 
   /* Send offer to peer */
-  send_sdp_offer (offer);
+  send_sdp_offer (offer, channel);
   gst_webrtc_session_description_free (offer);
 }
 
@@ -283,19 +284,20 @@ static void
 on_negotiation_needed (GstElement * element, gpointer user_data)
 {
   GstPromise *promise;
+  Channel *channel = (Channel *)user_data;
 
   g_signal_emit_by_name (webrtc1, "create-data-channel", "channel", NULL,
       &send_channel);
 
   if (send_channel) {
     g_print ("Created data channel\n");
-    connect_data_channel_signals (send_channel);
+    connect_data_channel_signals (send_channel, user_data);
   } else {
     g_print ("Could not create data channel, is usrsctp available?\n");
   }
 
   g_print("on_negotiation_needed\n");
-  app_state = PEER_CALL_NEGOTIATING;
+  channel->state = PEER_CALL_NEGOTIATING;
 
   promise = gst_promise_new_with_change_func (on_offer_created, user_data, NULL);;
 
@@ -343,7 +345,7 @@ create_data_channel_pipeline ()
 }
 
 static gboolean
-start_pipeline (void)
+start_pipeline (Channel *channel)
 {
   GstStateChangeReturn ret;
   GError *error = NULL;
@@ -362,12 +364,12 @@ start_pipeline (void)
   /* This is the gstwebrtc entry point where we create the offer and so on. It
    * will be called when the pipeline goes to PLAYING. */
   g_signal_connect (webrtc1, "on-negotiation-needed",
-      G_CALLBACK (on_negotiation_needed), NULL);
+      G_CALLBACK (on_negotiation_needed), channel);
 
   /* We need to transmit this ICE candidate to the browser via the websockets
    * signalling server. Incoming ice candidates from the browser need to be
    * added by us too, see on_server_message() */ g_signal_connect (webrtc1, "on-ice-candidate", 
-      G_CALLBACK (send_ice_candidate_message), NULL);
+      G_CALLBACK (send_ice_candidate_message), channel);
 
   gst_element_set_state (pipe1, GST_STATE_READY);
 
@@ -388,43 +390,43 @@ err:
 }
 
 static gboolean
-setup_call (void)
+setup_call (Channel *channel)
 {
   gchar *msg;
 
-  if (soup_websocket_connection_get_state (ws_conn) !=
+  if (soup_websocket_connection_get_state (channel->conn) !=
       SOUP_WEBSOCKET_STATE_OPEN)
     return FALSE;
 
   if (!peer_id)
     return FALSE;
 
-  g_print ("Setting up signalling server call with %s\n", peer_id);
-  app_state = PEER_CONNECTING;
-  msg = g_strdup_printf ("SESSION %s", peer_id);
-  soup_websocket_connection_send_text (ws_conn, msg);
+  g_print ("Setting up signalling server call with %s\n", channel->peer_id);
+  channel->state = PEER_CONNECTING;
+  msg = g_strdup_printf ("SESSION %s", channel->peer_id);
+  soup_websocket_connection_send_text (channel->conn, msg);
   g_free (msg);
   return TRUE;
 }
 
 static gboolean
-register_with_server (void)
+register_with_server (Channel *channel)
 {
   gchar *hello;
   gint32 our_id;
 
-  if (soup_websocket_connection_get_state (ws_conn) !=
+  if (soup_websocket_connection_get_state (channel->conn) !=
       SOUP_WEBSOCKET_STATE_OPEN)
     return FALSE;
 
   our_id = g_random_int_range (10, 10000);
   g_print ("Registering id %i with server\n", our_id);
-  app_state = SERVER_REGISTERING;
+  channel->state = SERVER_REGISTERING;
 
   /* Register with the server with a random integer id. Reply will be received
    * by on_server_message() */
   hello = g_strdup_printf ("HELLO %i", our_id);
-  soup_websocket_connection_send_text (ws_conn, hello);
+  soup_websocket_connection_send_text (channel->conn, hello);
   g_free (hello);
 
   return TRUE;
@@ -434,8 +436,9 @@ static void
 on_server_closed (SoupWebsocketConnection * conn G_GNUC_UNUSED,
     gpointer user_data G_GNUC_UNUSED)
 {
-  app_state = SERVER_CLOSED;
-  cleanup_and_quit_loop ("Server connection closed", 0);
+  Channel *channel = (Channel *) user_data;
+  channel->state = SERVER_CLOSED;
+  cleanup_and_quit_loop ("Server connection closed", channel, 0);
 }
 
 /* One mega message handler for our asynchronous calling mechanism */
@@ -465,47 +468,47 @@ on_server_message (SoupWebsocketConnection * conn, SoupWebsocketDataType type,
   if (g_strcmp0 (text, "HELLO") == 0) {
     if (channel->state != SERVER_REGISTERING) {
       cleanup_and_quit_loop ("ERROR: Received HELLO when not registering",
-          APP_STATE_ERROR);
+          channel, APP_STATE_ERROR);
       goto out;
     }
-    app_state = SERVER_REGISTERED;
+    channel->state = SERVER_REGISTERED;
     /* Ask signalling server to connect us with a specific peer */
-    if (!setup_call ()) {
-      cleanup_and_quit_loop ("ERROR: Failed to setup call", PEER_CALL_ERROR);
+    if (!setup_call (channel)) {
+      cleanup_and_quit_loop ("ERROR: Failed to setup call", channel, PEER_CALL_ERROR);
       goto out;
     }
   /* Call has been setup by the server, now we can start negotiation */
   } else if (g_strcmp0 (text, "SESSION_OK") == 0) {
-    if (app_state != PEER_CONNECTING) {
+    if (channel->state != PEER_CONNECTING) {
       cleanup_and_quit_loop ("ERROR: Received SESSION_OK when not calling",
-          PEER_CONNECTION_ERROR);
+          channel, PEER_CONNECTION_ERROR);
       goto out;
     }
 
-    app_state = PEER_CONNECTED;
+    channel->state = PEER_CONNECTED;
     /* Start negotiation (exchange SDP and ICE candidates) */
-    if (!start_pipeline ())
+    if (!start_pipeline (channel))
       cleanup_and_quit_loop ("ERROR: failed to start pipeline",
-          PEER_CALL_ERROR);
+          channel, PEER_CALL_ERROR);
   /* Handle errors */
   } else if (g_str_has_prefix (text, "ERROR")) {
-    switch (app_state) {
+    switch (channel->state) {
       case SERVER_CONNECTING:
-        app_state = SERVER_CONNECTION_ERROR;
+        channel->state = SERVER_CONNECTION_ERROR;
         break;
       case SERVER_REGISTERING:
-        app_state = SERVER_REGISTRATION_ERROR;
+        channel->state = SERVER_REGISTRATION_ERROR;
         break;
       case PEER_CONNECTING:
-        app_state = PEER_CONNECTION_ERROR;
+        channel->state = PEER_CONNECTION_ERROR;
         break;
       case PEER_CONNECTED:
       case PEER_CALL_NEGOTIATING:
-        app_state = PEER_CALL_ERROR;
+        channel->state = PEER_CALL_ERROR;
       default:
-        app_state = APP_STATE_ERROR;
+        channel->state = APP_STATE_ERROR;
     }
-    cleanup_and_quit_loop (text, 0);
+    cleanup_and_quit_loop (text, channel, 0);
   /* Look for JSON messages containing SDP and ICE candidates */
   } else {
     JsonNode *root;
@@ -532,13 +535,13 @@ on_server_message (SoupWebsocketConnection * conn, SoupWebsocketDataType type,
       const gchar *text, *sdptype;
       GstWebRTCSessionDescription *answer;
 
-      g_assert_cmphex (app_state, ==, PEER_CALL_NEGOTIATING);
+      g_assert_cmphex (channel->state, ==, PEER_CALL_NEGOTIATING);
 
       child = json_object_get_object_member (object, "sdp");
 
       if (!json_object_has_member (child, "type")) {
         cleanup_and_quit_loop ("ERROR: received SDP without 'type'",
-            PEER_CALL_ERROR);
+            channel, PEER_CALL_ERROR);
         goto out;
       }
 
@@ -571,7 +574,7 @@ on_server_message (SoupWebsocketConnection * conn, SoupWebsocketDataType type,
         gst_promise_unref (promise);
       }
 
-      app_state = PEER_CALL_STARTED;
+      channel->state = PEER_CALL_STARTED;
     } else if (json_object_has_member (object, "ice")) {
       const gchar *candidate;
       gint sdpmlineindex;
@@ -597,23 +600,23 @@ static void
 on_server_connected (SoupSession * session, GAsyncResult * res, Channel *channel) {
   GError *error = NULL;
 
-  ws_conn = soup_session_websocket_connect_finish (session, res, &error);
+  channel->conn = soup_session_websocket_connect_finish (session, res, &error);
   if (error) {
-    cleanup_and_quit_loop (error->message, SERVER_CONNECTION_ERROR);
+    cleanup_and_quit_loop (error->message, channel, SERVER_CONNECTION_ERROR);
     g_error_free (error);
     return;
   }
 
-  g_assert_nonnull (ws_conn);
+  g_assert_nonnull (channel->conn);
 
-  app_state = SERVER_CONNECTED;
+  channel->state = SERVER_CONNECTED;
   g_print ("Connected to signalling server\n");
 
-  g_signal_connect (ws_conn, "closed", G_CALLBACK (on_server_closed), NULL);
-  g_signal_connect (ws_conn, "message", G_CALLBACK (on_server_message), channel);
+  g_signal_connect (channel->conn, "closed", G_CALLBACK (on_server_closed), channel);
+  g_signal_connect (channel->conn, "message", G_CALLBACK (on_server_message), channel);
 
   /* Register with the server so it knows about us and can accept commands */
-  register_with_server ();
+  register_with_server (channel);
 }
 
 /*
@@ -643,7 +646,7 @@ connect_to_websocket_server_async (Channel *channel)
   /* Once connected, we will register */
   soup_session_websocket_connect_async (session, message, NULL, NULL, NULL,
       (GAsyncReadyCallback) on_server_connected, channel);
-  app_state = SERVER_CONNECTING;
+  channel->state = SERVER_CONNECTING;
 }
 
 static gboolean
