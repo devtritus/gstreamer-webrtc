@@ -33,6 +33,14 @@ function getVideoElement(index) {
     return document.getElementById("stream_" + index);
 }
 
+function createVideoElement(index) {
+    const videoTag = "<video id='stream_"+ index + "' style='width:80%' autoplay playsinline>Your browser doesn't support video</video>";
+    var template = document.createElement('template');
+    var html = videoTag.trim(); // Never return a text node of whitespace as the result
+    template.innerHTML = html;
+    document.getElementById("video-container").appendChild(template.content.firstChild);
+}
+
 function setStatus(text) {
     console.log(text);
     var span = document.getElementById("status")
@@ -76,7 +84,7 @@ function onLocalDescription(desc, index) {
     let data_connection = data_connections[index];
     let ws_conn = connections[index];
     console.log("Got local description: " + JSON.stringify(desc));
-    data_connection.setLocalDescription(desc).then(function() {
+    data_connection.setLocalDescription(desc).then(() => {
         setStatus("Sending SDP answer");
         sdp = {'sdp': data_connection.localDescription}
         ws_conn.send(JSON.stringify(sdp));
@@ -122,12 +130,6 @@ function onServerMessage(event) {
 
             if (msg.sdp != null) {
                 onIncomingSDP(msg.sdp, currentId);
-                //Заранее открываем следующее соединение, для очередного потока
-                /*const videoTag = "<video id='stream_"+ currentId + "' style='width:80%' autoplay playsinline>Your browser doesn't support video</video>"
-                var template = document.createElement('template');
-                var html = videoTag.trim(); // Never return a text node of whitespace as the result
-                template.innerHTML = html;
-                document.getElementById("video-container").appendChild(template.content.firstChild);*/
                 window.setTimeout(websocketServerConnect, 1000);
             } else if (msg.ice != null) {
                 onIncomingICE(msg.ice, data_connection);
@@ -193,9 +195,13 @@ function websocketServerConnect() {
 }
 
 function onRemoteTrack(event, index) {
-    if (getVideoElement(index).srcObject !== event.streams[0]) {
+    let elementNumber = index - 1;
+    createVideoElement(elementNumber);
+    let videoElement = getVideoElement(elementNumber);
+    console.log("stream", event.streams[0]);
+    if (videoElement.srcObject !== event.streams[0]) {
         console.log('Incoming stream');
-        getVideoElement(index).srcObject = event.streams[0];
+        videoElement.srcObject = event.streams[0];
     }
 }
 

@@ -50,6 +50,8 @@ static const gchar *camera_login = NULL;
 static const gchar *camera_password = NULL;
 static const gchar *camera_location = NULL;
 
+static int next_id;
+
 typedef struct {
   gchar *login;
   gchar *password;
@@ -241,7 +243,8 @@ data_channel_on_message_string (GObject * dc, gchar *str, gpointer user_data)
   {
     g_print ("'Start' was entered\n");
     Channel *video_channel = malloc(sizeof(Channel));
-    int next_id = atoi(data_channel->peer_id) + 1;
+    next_id++;
+    g_print ("Next peer id %d\n", next_id);
     char id_string[16];
     sprintf(id_string, "%d", next_id); 
     video_channel->peer_id = id_string;
@@ -446,7 +449,7 @@ setup_call (Channel *channel)
       SOUP_WEBSOCKET_STATE_OPEN)
     return FALSE;
 
-  if (!peer_id)
+  if (!channel->peer_id)
     return FALSE;
 
   g_print ("Setting up signalling server call with %s\n", channel->peer_id);
@@ -578,6 +581,7 @@ on_server_message (SoupWebsocketConnection * conn, SoupWebsocketDataType type,
     object = json_node_get_object (root);
     /* Check type of JSON message */
     if (json_object_has_member (object, "sdp")) {
+      g_print("Receive SDP");
       int ret;
       GstSDPMessage *sdp;
       const gchar *text, *sdptype;
@@ -756,6 +760,7 @@ main (int argc, char *argv[])
 
   Channel channel;
   channel.peer_id = peer_id;
+  next_id = atoi(peer_id);
   channel.video = NULL;
 
   connect_to_websocket_server_async (&channel);
