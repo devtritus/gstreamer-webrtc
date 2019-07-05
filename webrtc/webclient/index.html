@@ -28,6 +28,7 @@
       <div class="row">
         <div class="col-md">
           <div>Status: <span id="status">unknown</span></div>
+          Translator response
           <div>
             <textarea id="text" cols=40 rows=4></textarea>
           </div>
@@ -35,11 +36,21 @@
       </div>
       <div class="row">
         <div class="col-md">
-          Text container
+          Message content
           <div><textarea id="text-channel-area" cols=40 rows=2></textarea></div>
+          <button onclick="startDefault()" class="btn btn-primary">Start default</button>
           <button onclick="sendText()" class="btn btn-default">Send</button>
-          <button onclick="start()" class="btn btn-primary">Start</button>
-          <button onclick="stop()" class="btn btn-secondary">Stop</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md" style="margin-top: 5px">
+          <form onsubmit="start(event)">
+            <div class="form-group">
+              <input type="submit" class="btn btn-primary" value="Start"/>
+              <input id="camera-url-input" text="type" style="width: 700px"/>
+              <label for="camera-url-input">URL</label>
+            </div>
+          </form>
         </div>
       </div>
       <div class="row">

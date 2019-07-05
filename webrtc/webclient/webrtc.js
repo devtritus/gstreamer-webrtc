@@ -281,15 +281,42 @@ function sendText() {
     var textChannelArea = document.getElementById('text-channel-area');
     var data = textChannelArea.value;
     console.log("Send: " + data);
-    getDataChannel().send(data);
+    send({ 
+      type: "text",
+      text: data
+    });
 }
 
-function start() {
-    console.log("START");
-    getDataChannel().send("start");
+function startDefault() {
+    console.log("Start default camera");
+    send({ type: "default" });
 }
 
-function stop() {
+function start(e) {
+    if(e) {
+      e.preventDefault();
+    }
+    let cameraUrl = document.getElementById("camera-url-input").value;
+    let part1 = cameraUrl.split("//");
+    let part2 = part1[1].split("@");
+    let part3 = part2[0].split(":");
+    console.log("Start camera " + cameraUrl);
+    let request = {
+      type: "custom",
+      location: part1[0] + "//" + part2[1],
+      login: part3[0],
+      password: part3[1]
+    }
+    console.log(request);
+    send(request);
+}
+
+function stop(index) {
+    //TODO:
     console.log("STOP");
     getDataChannel().send("stop");
+}
+
+function send(object) {
+    getDataChannel().send(JSON.stringify(object));
 }
