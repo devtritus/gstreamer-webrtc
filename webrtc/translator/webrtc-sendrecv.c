@@ -237,28 +237,63 @@ data_channel_on_close (GObject * dc, gpointer user_data)
 static void
 data_channel_on_message_string (GObject * dc, gchar *str, gpointer user_data)
 {
+  JsonNode *root;
+  JsonObject *object;
+  JsonParser *parser = json_parser_new ();
+  gchar *type;
+
   Channel *data_channel = (Channel *) user_data;
-  g_print ("Received data channel message: %s\n", str);
-  if(!g_strcmp0(str, "start"))
-  {
-    g_print ("'Start' was entered\n");
-    Channel *video_channel = malloc(sizeof(Channel));
-    next_id++;
-    g_print ("Next peer id %d\n", next_id);
-    char id_string[16];
-    sprintf(id_string, "%d", next_id); 
-    video_channel->peer_id = id_string;
-    VideoChannel *video = malloc(sizeof(VideoChannel));
-    video->login = camera_login;
-    video->password = camera_password;
-    video->location = camera_location;
-    video_channel->video = video;
-    connect_to_websocket_server_async (video_channel);
+
+  if (!json_parser_load_from_data (parser, str, -1, NULL)) {
+    g_printerr ("Unknown message '%s', ignoring", str);
+    g_object_unref (parser);
+    g_free(str);
+    return;
   }
-  else if(!g_strcmp0(str, "stop"))
-  {
-    g_print ("'Stop' was entered\n");
+
+  root = json_parser_get_root (parser);
+  if (!JSON_NODE_HOLDS_OBJECT (root)) {
+    g_printerr ("Unknown json message '%s', ignoring", str);
+    g_object_unref (parser);
+    g_free(str);
+    return;
   }
+
+  object = json_node_get_object (root);
+
+  if(json_object_has_member (object, "type")) {
+    type = json_object_get_string_member (object, "type");
+    if(!g_strcmp0(type, "text")) {
+      g_print("%s\n", json_object_get_string_member (object, "text"));
+    } else {
+      g_print ("Received data channel message: %s\n", str);
+      Channel *video_channel = malloc(sizeof(Channel));
+      VideoChannel *video = malloc(sizeof(VideoChannel));
+      video_channel->video = video;
+
+      if (!g_strcmp0(type, "default")) {
+        video->login = camera_login;
+        video->password = camera_password;
+        video->location = camera_location;
+      } else if (!g_strcmp0(type, "custom")) {
+        video->login = json_object_get_string_member (object, "login");
+        video->password = json_object_get_string_member (object, "password");
+        video->location = json_object_get_string_member (object, "location");
+      }
+
+      next_id++;
+      g_print ("Next peer id %d\n", next_id);
+      char id_string[16];
+      sprintf(id_string, "%d", next_id); 
+      video_channel->peer_id = id_string;
+      connect_to_websocket_server_async (video_channel);
+
+    }
+  } else {
+    g_print("Message %s hasn't type key", str);
+    g_object_unref (parser);
+    g_free(str);
+  } 
 }
 
 static void

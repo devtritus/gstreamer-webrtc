@@ -224,7 +224,10 @@ const handleDataChannelMessageReceived = (event) =>{
     } else {
         console.log('Incoming data message');
     }
-    getDataChannel().send("Hi! (from browser)");
+    send({ 
+      type: "text",
+      text: "Hi! (from browser)"
+    });
 };
 
 const handleDataChannelError = (error) =>{
