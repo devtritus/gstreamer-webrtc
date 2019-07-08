@@ -1,0 +1,12 @@
+#!/bin/sh
+
+cd libs/webrtc
+make
+cd ../../
+
+login=`cat ../camera_login`
+password=`cat ../camera_password`
+location=`cat ../camera_location`
+
+
+../bin/webrtc-sendrecv --peer-id=$1 --camera-login=$login --camera-password=$password --camera-location="$location"
