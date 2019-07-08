@@ -8,6 +8,7 @@ var connect_attempts = 0;
 var send_channels = [];
 var connections = [];
 var data_connections = [];
+var urlQueue = [];
 
 var id = 0;
 
@@ -203,6 +204,10 @@ function onRemoteTrack(event, index) {
         console.log('Incoming stream');
         videoElement.srcObject = event.streams[0];
     }
+    if(urlQueue.length > 0) {
+      let cameraUrl = urlQueue.shift();
+      setTimeout(() => start(cameraUrl), 2000);
+    }
 }
 
 function errorUserMediaHandler() {
@@ -295,11 +300,27 @@ function startDefault() {
     send({ type: "default" });
 }
 
-function start(e) {
+function startOne(e) {
     if(e) {
       e.preventDefault();
     }
     let cameraUrl = document.getElementById("camera-url-input").value;
+    start(cameraUrl);
+}
+
+function startMany(e) {
+  if(e) {
+    e.preventDefault();
+  }
+
+  let value = document.getElementById("camera-url-area").value;
+  let urls = value.split(/\s+/);
+  let firstUrl = urls.shift();
+  urlQueue = urlQueue.concat(urls);
+  start(firstUrl);
+}
+
+function start(cameraUrl) {
     let part1 = cameraUrl.split("//");
     let part2 = part1[1].split("@");
     let part3 = part2[0].split(":");

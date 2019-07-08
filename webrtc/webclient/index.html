@@ -44,7 +44,16 @@
       </div>
       <div class="row">
         <div class="col-md" style="margin-top: 5px">
-          <form onsubmit="start(event)">
+          <form onsubmit="startMany(event)">
+            <div class="form-group">
+              Streams
+              <div>
+                <textarea id="camera-url-area" text="type" cols=100 rows=4></textarea>
+              </div>
+              <input type="submit" class="btn btn-primary" value="Start"/>
+            </div>
+          </form>
+          <form onsubmit="startOne(event)">
             <div class="form-group">
               <input type="submit" class="btn btn-primary" value="Start"/>
               <input id="camera-url-input" text="type" style="width: 700px"/>
