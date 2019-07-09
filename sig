@@ -1,2 +1,2 @@
-cd webrtc_env/signalling
+cd env/signalling
 ./simple-server.py

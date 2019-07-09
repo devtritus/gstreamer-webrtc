@@ -1,2 +1,2 @@
-cd webrtc_env/webclient
+cd env/webclient
 node server.js
