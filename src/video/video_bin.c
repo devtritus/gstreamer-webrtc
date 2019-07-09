@@ -63,88 +63,30 @@ on_pad_added (GstElement *element,
   gst_object_unref (sinkpad);
 }
 
-GstElement create_video_pipeline (char *location,
-                                  char *login,
-                                  char *password)
+GstElement * create_video_bin (char *location, char *login, char *password)
 {
-  GstElement *pipeline, *rtspsrc, *demuxer, *decoder, *conv, *sink;
+  GstElement *bin, *rtspsrc, *depay, *tee;
   GstBus *bus;
-  guint bus_watch_id;
 
-  /* Initialisation */
-  gst_init (&argc, &argv);
+  bin = gst_pipeline_new ("video-bin");
+  rtspsrc   = gst_element_factory_make ("rtspsrc",      "rtspsrc");
+  depay     = gst_element_factory_make ("rtph264depay", "rtph264depay");
+  tee       = gst_element_factory_make ("tee",          "tee");
 
-  loop = g_main_loop_new (NULL, FALSE);
-
-
-  /* Check input arguments */
-  if (argc != 2) {
-    g_printerr ("Usage: %s <Ogg/Vorbis filename>\n", argv[0]);
-    return -1;
-  }
-
-
-  /* Create gstreamer elements */
-  pipeline = gst_pipeline_new ("video-pipeline");
-  rtspsrc   = gst_element_factory_make ("rtspsrc",       "rtspsrc");
-  demuxer  = gst_element_factory_make ("oggdemux",      "ogg-demuxer");
-  decoder  = gst_element_factory_make ("vorbisdec",     "vorbis-decoder");
-  conv     = gst_element_factory_make ("audioconvert",  "converter");
-  sink     = gst_element_factory_make ("autoaudiosink", "audio-output");
-
-  if (!pipeline || !rtspsrc || !demuxer || !decoder || !conv || !sink) {
+  if (!bin || !rtspsrc || !depay || !tee) {
     g_printerr ("One element could not be created. Exiting.\n");
     return -1;
   }
 
-  /* Set up the pipeline */
+  g_object_set (G_OBJECT (rtspsrc), "location",location,
+                                    "user-id", login,
+                                    "user-pw", password, NULL);
 
-  /* we set the input filename to the source element */
-  g_object_set (G_OBJECT (rtspsrc), "location", argv[1], NULL);
+  gst_bin_add_many (GST_BIN (bin), rtspsrc, depay, tee, NULL);
 
-  /* we add a message handler */
-  bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
-  bus_watch_id = gst_bus_add_watch (bus, bus_call, loop);
-  gst_object_unref (bus);
+  gst_element_link (depay, tee);
+  g_signal_connect (rtspsrc, "pad-added", G_CALLBACK (on_pad_added), depay);
 
-  /* we add all elements into the pipeline */
-  /* file-source | ogg-demuxer | vorbis-decoder | converter | alsa-output */
-  gst_bin_add_many (GST_BIN (pipeline),
-                    source, demuxer, decoder, conv, sink, NULL);
-
-  /* we link the elements together */
-  /* file-source -> ogg-demuxer ~> vorbis-decoder -> converter -> alsa-output */
-  gst_element_link (source, demuxer);
-  gst_element_link_many (decoder, conv, sink, NULL);
-  g_signal_connect (demuxer, "pad-added", G_CALLBACK (on_pad_added), decoder);
-
-  /* note that the demuxer will be linked to the decoder dynamically.
-     The reason is that Ogg may contain various streams (for example
-     audio and video). The source pad(s) will be created at run time,
-     by the demuxer when it detects the amount and nature of streams.
-     Therefore we connect a callback function which will be executed
-     when the "pad-added" is emitted.*/
-
-
-  /* Set the pipeline to "playing" state*/
-  g_print ("Now playing: %s\n", argv[1]);
-  gst_element_set_state (pipeline, GST_STATE_PLAYING);
-
-
-  /* Iterate */
-  g_print ("Running...\n");
-  g_main_loop_run (loop);
-
-
-  /* Out of the main loop, clean up nicely */
-  g_print ("Returned, stopping playback\n");
-  gst_element_set_state (pipeline, GST_STATE_NULL);
-
-  g_print ("Deleting pipeline\n");
-  gst_object_unref (GST_OBJECT (pipeline));
-  g_source_remove (bus_watch_id);
-  g_main_loop_unref (loop);
-
-  return 0;
+  return bin;
 }
 

@@ -3,6 +3,6 @@
 
 #include <gst/gst.h>
 
-GstElement *create_video_bin ();
+GstElement * create_video_bin (gchar *location, gchar *login, gchar *password);
 
 #endif
