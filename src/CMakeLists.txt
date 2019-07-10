@@ -18,7 +18,8 @@ pkg_check_modules(GSTLIBS REQUIRED
         json-glib-1.0)
 
 #set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
+set(CMAKE_C_FLAGS "-O0 -g -ggdb -Wall -Werror -fno-omit-frame-pointer \
+		$(shell pkg-config --cflags glib-2.0 gstreamer-1.0 gstreamer-sdp-1.0 gstreamer-webrtc-1.0 json-glib-1.0 libsoup-2.4) -Wall")
 
 # Following example at https://stackoverflow.com/questions/38959678/is-there-a-simple-gstreamer-example-for-c
 # https://gstreamer.freedesktop.org/documentation/installing/on-linux.html
@@ -32,19 +33,14 @@ include_directories(
         /usr/local/include/libsoup-2.4
         /usr/local/include/json-glib-1.0)
 
-#[[link_libraries(gstreamer-1.0
-        gobject-2.0
-        glib-2.0
-        gstreamer-webrtc-1.0
-        gstreamer-sdp-1.0
-        libsoup-2.4
-        json-glib-1.0)]]
+set(SOURCE_FILES
+  video/video_bin.h
+  video/video_bin.c)
 
-set(SOURCE_FILES video/video_bin.c video/video_bin.h)
 set(CMAKE_BINARY_DIR ../../bin)
 
 link_directories(${GSTLIBS_LIBRARY_DIRS})
 
 add_executable(station_core ${SOURCE_FILES})
 
-target_link_libraries(station_core ${GSTLIBS_LIBRARIES})
+#target_link_libraries(station_core ${GSTLIBS_LIBRARIES})
