@@ -1,5 +1,7 @@
 *swp
+cmake
 webrtc/webclient/node_modules/*
 webrtc/webclient/package-lock.json
 CMakeFiles
+MakeFile
 CMakeCache.txt
