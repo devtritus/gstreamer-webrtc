@@ -10,41 +10,6 @@
             video_channel.login, video_channel.password, video_channel.location);
             */
 
-static gboolean
-bus_call (GstBus     *bus,
-          GstMessage *msg,
-          gpointer    data)
-{
-  GMainLoop *loop = (GMainLoop *) data;
-
-  switch (GST_MESSAGE_TYPE (msg)) {
-
-    case GST_MESSAGE_EOS:
-      g_print ("End of stream\n");
-      g_main_loop_quit (loop);
-      break;
-
-    case GST_MESSAGE_ERROR: {
-      gchar  *debug;
-      GError *error;
-
-      gst_message_parse_error (msg, &error, &debug);
-      g_free (debug);
-
-      g_printerr ("Error: %s\n", error->message);
-      g_error_free (error);
-
-      g_main_loop_quit (loop);
-      break;
-    }
-    default:
-      break;
-  }
-
-  return TRUE;
-}
-
-
 static void
 on_pad_added (GstElement *element,
               GstPad     *pad,
@@ -63,10 +28,9 @@ on_pad_added (GstElement *element,
   gst_object_unref (sinkpad);
 }
 
-GstElement * create_video_bin (char *location, char *login, char *password)
+int create_video_bin (char *location, char *login, char *password, GstElement *bin)
 {
-  GstElement *bin, *rtspsrc, *depay, *tee;
-  GstBus *bus;
+  GstElement *rtspsrc, *depay, *tee;
 
   bin = gst_pipeline_new ("video-bin");
   rtspsrc   = gst_element_factory_make ("rtspsrc",      "rtspsrc");
@@ -87,6 +51,6 @@ GstElement * create_video_bin (char *location, char *login, char *password)
   gst_element_link (depay, tee);
   g_signal_connect (rtspsrc, "pad-added", G_CALLBACK (on_pad_added), depay);
 
-  return bin;
+  return 0;
 }
 
