@@ -3,5 +3,5 @@
 webrtc/webclient/node_modules/*
 webrtc/webclient/package-lock.json
 CMakeFiles
-MakeFile
+Makefile
 CMakeCache.txt
