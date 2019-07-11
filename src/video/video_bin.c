@@ -54,3 +54,7 @@ int create_video_bin (char *location, char *login, char *password, GstElement *b
   return 0;
 }
 
+int main(int argc, char *argv[]) {
+  return -1;
+}
+
