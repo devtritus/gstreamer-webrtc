@@ -63,15 +63,9 @@ on_pad_added (GstElement *element,
   gst_object_unref (sinkpad);
 }
 
-static void *
-create_stream_pipeline(gpointer data) {
-  GMainLoop *loop;
-
-  GstBus *bus;
-  guint bus_watch_id;
+static GstElement *
+create_stream_pipeline() {
   GstElement *pipeline, *rtspsrc, *depay, *tee;
-
-  loop = g_main_loop_new (NULL, FALSE);
   
   pipeline = gst_pipeline_new ("video-pipeline");
   rtspsrc   = gst_element_factory_make ("rtspsrc",      "rtspsrc");
@@ -83,15 +77,27 @@ create_stream_pipeline(gpointer data) {
     return NULL;
   }
 
-  g_object_set (G_OBJECT (rtspsrc), "location", "rtsp://admin:Barco1984@172.17.13.216:554/cam/realmonitor?channel=1&subtype=0",
+  g_object_set (G_OBJECT (rtspsrc), "location", "rtsp://192.168.1.108:554/cam/realmonitor?channel=1&subtype=0",
                                     "user-id", "admin",
-                                    "user-pw", "Barco1984", NULL);
+                                    "user-pw", "1236987q", NULL);
 
   gst_bin_add_many (GST_BIN (pipeline), rtspsrc, depay, tee, NULL);
 
   gst_element_link (depay, tee);
   g_signal_connect (rtspsrc, "pad-added", G_CALLBACK (on_pad_added), depay);
 
+  return pipeline;
+}
+
+static void *
+start_pipeline(gpointer data) {
+  GMainLoop *loop;
+  GstBus *bus;
+  guint bus_watch_id;
+
+  GstElement * pipeline = (GstElement *)data;
+
+  loop = g_main_loop_new (NULL, FALSE);
   /* we add a message handler */
   bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
   bus_watch_id = gst_bus_add_watch (bus, bus_call, loop);
@@ -116,18 +122,29 @@ create_stream_pipeline(gpointer data) {
   return pipeline;
 }
 
+static void 
+add_splitmuxsink(GstElement * pipeline) {
+}
+
 int main(int argc, char *argv[])
 {
+  GstElement * pipeline;
   GThread * pipelineThread;
-  gchar * str = NULL;
+  gchar str[16];
   /* Initialisation */
   gst_init (&argc, &argv);
 
   do {
     scanf("%s", str);
+    g_print("You enter: %s\n", str);
     if(g_strcmp0 ("run", str) == 0) {
-      pipelineThread = g_thread_new("stream", &create_stream_pipeline, NULL);
-      g_print("%p\n", pipelineThread);
+      pipeline = create_stream_pipeline();
+      pipelineThread = g_thread_new("stream", &start_pipeline, pipeline);
+      g_print("Create rtsp stream %p\n", pipelineThread);
+    } else if (g_strcmp0 ("splitmuxsink", str) == 0) {
+      g_print("Add splitmuxsink");
+    } else if (g_strcmp0 ("webrtc", str) == 0) {
+      g_print("Add webrtc");
     }
   } while (g_strcmp0 ("end", str) != 0);
 
