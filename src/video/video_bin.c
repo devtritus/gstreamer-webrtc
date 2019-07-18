@@ -83,29 +83,48 @@ on_pad_added (GstElement *element,
 
 static StreamPipeline *
 create_stream_pipeline() {
-  GstElement *rtspsrc, *depay;
-  StreamPipeline * stream_pipeline = (StreamPipeline *)g_malloc0 (sizeof (StreamPipeline));
+  GstElement *pipeline, *src, *depay, *tee, *queue, *sink;
+  StreamPipeline *stream_pipeline;
+  GstPadTemplate *sinkTemplate;
   
-  stream_pipeline->pipeline = gst_pipeline_new ("video-pipeline");
-  rtspsrc   = gst_element_factory_make ("rtspsrc",      "rtspsrc");
-  depay     = gst_element_factory_make ("rtph264depay", "rtph264depay");
-  stream_pipeline->tee = gst_element_factory_make ("tee", "tee");
+  pipeline = gst_pipeline_new ("video-pipeline");
 
-  if (!stream_pipeline->pipeline || !rtspsrc || !depay || !stream_pipeline->tee) {
-    g_printerr ("One element could not be created. Exiting.\n");
+  src   = gst_element_factory_make ("rtspsrc",      "src");
+  depay = gst_element_factory_make ("rtph264depay", "depay");
+  tee =   gst_element_factory_make ("tee",          "tee");
+  queue = gst_element_factory_make ("queue",        "queue");
+  sink  = gst_element_factory_make ("splitmuxsink", "sink");
+
+  if (!pipeline || !src || !depay || !tee || !queue || !sink) {
+    g_printerr ("Failed to create elements");
     return NULL;
   }
 
-  g_object_set (G_OBJECT (rtspsrc), "location", camera_location,
-                                    "user-id", camera_login,
-                                    "user-pw", camera_password, NULL);
+  g_object_set (G_OBJECT (src), "location", camera_location,
+                                "user-id", camera_login,
+                                "user-pw", camera_password, NULL);
 
-  g_object_set (G_OBJECT (stream_pipeline->tee), "allow-not-linked", TRUE, NULL);
+  g_object_set (G_OBJECT(sink), "location", "archive/video%02d.mp4",
+                                "max-size-time", 10000000000,
+                                "max-size-bytes", 10000000, NULL);
 
-  gst_bin_add_many (GST_BIN (stream_pipeline->pipeline), rtspsrc, depay, stream_pipeline->tee, NULL);
+  gst_bin_add_many (GST_BIN (pipeline), src, depay, tee, queue, sink, NULL);
 
-  gst_element_link (depay, stream_pipeline->tee);
-  g_signal_connect (rtspsrc, "pad-added", G_CALLBACK (on_pad_added), depay);
+  if(!gst_element_link_many (depay, tee, queue, NULL)) {
+    g_printerr ("Failed to link elements");
+  }
+
+  GstPad *queue_src_pad = gst_element_get_static_pad (queue, "src");
+  sinkTemplate = gst_element_class_get_pad_template (GST_ELEMENT_GET_CLASS(sink), "video");
+  GstPad *video_sink_pad = gst_element_request_pad (sink, sinkTemplate, NULL, NULL);
+  g_print ("-------------------------------------------------------------------------");
+  gst_pad_link (queue_src_pad, video_sink_pad);
+
+  g_signal_connect (src, "pad-added", G_CALLBACK (on_pad_added), depay);
+
+  stream_pipeline = (StreamPipeline *)g_malloc0 (sizeof (StreamPipeline));
+  stream_pipeline->pipeline = pipeline;
+  stream_pipeline->tee = tee;
 
   return stream_pipeline;
 }
@@ -115,17 +134,19 @@ start_pipeline(gpointer data) {
   GMainLoop *loop;
   GstBus *bus;
   guint bus_watch_id;
+  GstElement * pipeline;
 
   StreamPipeline * stream_pipeline = (StreamPipeline *)data;
+  pipeline = stream_pipeline->pipeline;
 
   loop = g_main_loop_new (NULL, FALSE);
   /* we add a message handler */
-  bus = gst_pipeline_get_bus (GST_PIPELINE (stream_pipeline->pipeline));
+  bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
   bus_watch_id = gst_bus_add_watch (bus, bus_call, loop);
   gst_object_unref (bus);
 
   /* Set the pipeline to "playing" state*/
-  gst_element_set_state (stream_pipeline->pipeline, GST_STATE_PLAYING);
+  gst_element_set_state (pipeline, GST_STATE_PLAYING);
 
   /* Iterate */
   g_print ("Running...\n");
@@ -133,69 +154,14 @@ start_pipeline(gpointer data) {
 
   /* Out of the main loop, clean up nicely */
   g_print ("Returned, stopping playback\n");
-  gst_element_set_state (stream_pipeline->pipeline, GST_STATE_NULL);
+  gst_element_set_state (pipeline, GST_STATE_NULL);
 
   g_print ("Deleting pipeline\n");
-  gst_object_unref (GST_OBJECT (stream_pipeline->pipeline));
+  gst_object_unref (GST_OBJECT (pipeline));
   g_source_remove (bus_watch_id);
   g_main_loop_unref (loop);
 
-  return stream_pipeline;
-}
-
-static void 
-add_splitmuxsink(StreamPipeline * stream_pipeline) {
-  GstElement * queue, * sink;
-  GstPad * teesrcpad = NULL;
-  GstPad * queuesinkpad = NULL;
-
-  queue = gst_element_factory_make ("queue", "queue");
-  sink  = gst_element_factory_make ("splitmuxsink", "sink");
-  
-  if(!queue || !sink) {
-    g_print("error0");
-    return;
-  }
-
-  g_object_set (G_OBJECT(sink), "location", "data/video%02d.mp4",
-                                "max-size-time", 10000000000,
-                                "max-size-bytes", 10000000, NULL);
-
-  gst_bin_add_many (GST_BIN (stream_pipeline->pipeline), queue, sink, NULL);
-
-  teesrcpad = gst_element_request_pad (stream_pipeline->tee,
-    gst_element_class_get_pad_template (GST_ELEMENT_GET_CLASS (stream_pipeline->tee), "src_%u"), NULL, NULL);
-
-  queuesinkpad = gst_element_get_static_pad (queue, "sink");
-
-  if(!gst_pad_link (gst_element_get_static_pad (queue, "src"), gst_element_request_pad (sink,
-          gst_element_class_get_pad_template (GST_ELEMENT_GET_CLASS (sink), "video"), NULL, NULL))) {
-    g_print("Not linked to sink");
-  }
-
-  g_print("%p\n", teesrcpad);
-  if (!teesrcpad) {
-    g_print ("Tee pad not found");
-  }
-
-  g_print("%p\n", queuesinkpad);
-  if (!queuesinkpad) {
-    g_print ("Queue pad not found");
-  }
-
-  if(!gst_element_sync_state_with_parent (queue)) {
-    g_print("error1");
-  }
-  if(!gst_element_sync_state_with_parent (stream_pipeline->tee)) {
-    g_print("error2");
-  }
-
-  if(!gst_pad_link (teesrcpad, queuesinkpad)) {
-    g_print ("Pads not linked\n");
-    return;
-  }
-
-  g_print("'splitmuxsink' added\n");
+  return NULL;
 }
 
 int main(int argc, char *argv[])
@@ -226,7 +192,7 @@ int main(int argc, char *argv[])
       pipelineThread = g_thread_new("stream", &start_pipeline, stream_pipeline);
       g_print("Create rtsp stream %p\n", pipelineThread);
     } else if (g_strcmp0 ("file", str) == 0) {
-      add_splitmuxsink(stream_pipeline);
+      /*add_splitmuxsink(stream_pipeline);*/
     } else if (g_strcmp0 ("webrtc", str) == 0) {
     } else {
       g_print ("Unknown command\n");
