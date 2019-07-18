@@ -104,6 +104,8 @@ create_stream_pipeline() {
                                 "user-id", camera_login,
                                 "user-pw", camera_password, NULL);
 
+  /* g_object_set (G_OBJECT (tee), "allow-not-linked", TRUE, NULL); */
+
   g_object_set (G_OBJECT(sink), "location", "archive/video%02d.mp4",
                                 "max-size-time", 10000000000,
                                 "max-size-bytes", 10000000, NULL);
@@ -117,7 +119,6 @@ create_stream_pipeline() {
   GstPad *queue_src_pad = gst_element_get_static_pad (queue, "src");
   sinkTemplate = gst_element_class_get_pad_template (GST_ELEMENT_GET_CLASS(sink), "video");
   GstPad *video_sink_pad = gst_element_request_pad (sink, sinkTemplate, NULL, NULL);
-  g_print ("-------------------------------------------------------------------------");
   gst_pad_link (queue_src_pad, video_sink_pad);
 
   g_signal_connect (src, "pad-added", G_CALLBACK (on_pad_added), depay);
