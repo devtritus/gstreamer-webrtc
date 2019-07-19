@@ -93,7 +93,7 @@ create_stream_pipeline() {
   depay = gst_element_factory_make ("rtph264depay", "depay");
   tee =   gst_element_factory_make ("tee",          "tee");
   queue = gst_element_factory_make ("queue",        "queue");
-  sink  = gst_element_factory_make ("filesink", "sink");
+  sink  = gst_element_factory_make ("splitmuxsink", "sink");
 
   if (!pipeline || !src || !depay || !tee || !queue || !sink) {
     g_printerr ("Failed to create elements");
@@ -106,7 +106,10 @@ create_stream_pipeline() {
 
   /* g_object_set (G_OBJECT (tee), "allow-not-linked", TRUE, NULL); */
 
-  g_object_set (G_OBJECT(sink), "location", "archive/video.mp4", NULL);
+  
+  g_object_set (G_OBJECT(sink), "location", "archive/video_split.mp4",
+                                "max-size-time", 10000000000,
+                                "max-size-bytes", 10000000, NULL);
 
   gst_bin_add_many (GST_BIN (pipeline),
                              src, depay, tee, queue, sink, NULL);
@@ -116,7 +119,7 @@ create_stream_pipeline() {
   }
 
   GstPad *queue_src_pad = gst_element_get_static_pad (queue, "src");
-  GstPad *video_sink_pad = gst_element_get_static_pad (sink, "sink");
+  GstPad *video_sink_pad = gst_element_get_request_pad (sink, "video");
 
   if(!queue_src_pad || !video_sink_pad) {
     g_print("Error while creating queue_src or video_sink pad\n");
