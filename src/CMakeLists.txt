@@ -10,7 +10,7 @@ pkg_check_modules(GSTLIBS REQUIRED
         libsoup-2.4
         json-glib-1.0)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g -ggdb -Wall -Werror -fno-omit-frame-pointer")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g -ggdb -Werror -fno-omit-frame-pointer")
 
 # Following example at https://stackoverflow.com/questions/38959678/is-there-a-simple-gstreamer-example-for-c
 # https://gstreamer.freedesktop.org/documentation/installing/on-linux.html
