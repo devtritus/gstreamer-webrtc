@@ -111,10 +111,23 @@ create_stream_pipeline() {
   gst_bin_add_many (GST_BIN (pipeline),
                              src, depay, tee, queue, sink, NULL);
 
-  if(!gst_element_link_many (depay, tee, queue, sink, NULL)) {
+  if(!gst_element_link_many (depay, tee, queue, NULL)) {
     g_printerr ("Failed to link elements");
+  }
+
+  GstPad *queue_src_pad = gst_element_get_static_pad (queue, "src");
+  GstPad *video_sink_pad = gst_element_get_static_pad (sink, "sink");
+
+  if(!queue_src_pad || !video_sink_pad) {
+    g_print("Error while creating queue_src or video_sink pad\n");
     return NULL;
   }
+
+  g_print ("--------------------------------------------------\n");
+  if(gst_pad_link (queue_src_pad, video_sink_pad) != GST_PAD_LINK_OK) {
+    g_printerr ("Error while connecting to sink pad\n");
+  }
+  g_print ("--------------------------------------------------\n");
 
   g_signal_connect (src, "pad-added", G_CALLBACK (on_pad_added), depay);
 
